@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <cstring>
 #include "../matplotlib/matplotlib.h"
 namespace plt = matplotlibcpp;
 
