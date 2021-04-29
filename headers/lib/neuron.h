@@ -29,7 +29,7 @@ namespace ActivationFunction
 
 /**
  * Implementation of simple neuron,
- * as template argument it takes number of inputs
+ * as argument it takes number of inputs
  */
 template <size_t n>
 class Neuron
@@ -75,9 +75,9 @@ public:
     }
 
     /**
-     * Class constructor, as parameter it takes argument for activation function 
+     * Neuron construction, as required arg takes vector of weights
      */
-    Neuron(std::array<double, n> &weights, func_ptr activation_func, func_ptr activation_derivative_func, double beta, double bias = 1)
+    Neuron(std::array<double, n> &weights, func_ptr activation_func = ActivationFunction::unipolar_func, func_ptr activation_derivative_func = ActivationFunction::unipolar_func_derivative, double beta = 1.0, double bias = 1.0)
     {
         this->bias = bias;
         this->beta = beta;
