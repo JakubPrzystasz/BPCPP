@@ -2,7 +2,6 @@
 #define NEURON_H
 #include "includes.h"
 
-
 typedef double (*func_ptr)(double, double *);
 
 namespace ActivationFunction
@@ -28,12 +27,12 @@ namespace ActivationFunction
     double bipolar_derivative(double base_output, double *params);
 };
 
-
 /**
  * Implementation of simple neuron,
- * as argument it takes number of inputs
+ * @arg n number of inputs
+ * @arg momentum number of previous momentum m-1, m-2...
  */
-template <size_t n>
+template <size_t n, size_t m>
 class Neuron
 {
     double input_size = n;
@@ -50,9 +49,9 @@ public:
     double beta;
 
     /**
-     * Vector of input weights
+     * Vector of input weights, and previous weights
      */
-    std::array<double, n> input_weights;
+    std::array<double, n * (m+1)> input_weights;
 
     /**
      * Pointer to activation function 
@@ -67,7 +66,7 @@ public:
     /**
      * Get output value of neuron from given input value
      */
-    double output(std::array<double, n> &input)
+    double feed(std::array<double, n> &input)
     {
         double output = bias;
         for (size_t i{0}; i < n; i++)
@@ -88,8 +87,8 @@ public:
 
         std::random_device r;
         std::default_random_engine gen(r());
-        std::uniform_real_distribution<> dis(0.0, 1.0);
-        for(size_t i{0};i<n;i++)
+        std::uniform_real_distribution<double> dis(0.0, 1.0);
+        for (size_t i{0}; i < n; i++)
             input_weights[i] = dis(gen);
     }
 
@@ -113,6 +112,5 @@ public:
     {
     }
 };
-
 
 #endif

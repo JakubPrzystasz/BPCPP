@@ -1,11 +1,14 @@
-#include <lib/neuron.h>
+#include <lib/layer.h>
 
 int main()
 {
-    std::array<double, 2> input = {1,2};
-    auto myNeuron = Neuron<2>();
+    auto myLayer = Layer<4, 4, 1>();
+    std::array<double, 4> input = {0.4, 0.3, 0.1, 0.83};
+    std::array<double, 4> output;
+    myLayer.feed(input, output);
 
-    std::cout << myNeuron.output(input) << std::endl;
+    for(double &val : output)
+        std::cout << val << std::endl;
 
     return 0;
 }
