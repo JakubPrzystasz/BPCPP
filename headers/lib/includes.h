@@ -6,6 +6,8 @@
 #include <string>
 #include <cmath>
 #include <cstring>
+#include <iomanip>
+#include <random>
 #include "../matplotlib/matplotlib.h"
 namespace plt = matplotlibcpp;
 

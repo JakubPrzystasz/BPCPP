@@ -2,6 +2,7 @@
 #define NEURON_H
 #include "includes.h"
 
+
 typedef double (*func_ptr)(double, double *);
 
 namespace ActivationFunction
@@ -9,23 +10,24 @@ namespace ActivationFunction
     /**
  * Unipolar neuron activation function - as parameter it takes array of one element (Beta constant)
  */
-    double unipolar_func(double input, double *params);
+    double unipolar(double input, double *params);
 
     /**
  * Unipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
  */
-    double unipolar_func_derivative(double base_output, double *params);
+    double unipolar_derivative(double base_output, double *params);
 
     /**
  * Bipolar neuron activation function - as parameter it takes array of one element (Beta constant)
  */
-    double bipolar_func(double input, double *params);
+    double bipolar(double input, double *params);
 
     /**
  * Bipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
  */
-    double bipolar_func_derivative(double base_output, double *params);
+    double bipolar_derivative(double base_output, double *params);
 };
+
 
 /**
  * Implementation of simple neuron,
@@ -77,12 +79,30 @@ public:
     /**
      * Neuron construction, as required arg takes vector of weights
      */
-    Neuron(std::array<double, n> &weights, func_ptr activation_func = ActivationFunction::unipolar_func, func_ptr activation_derivative_func = ActivationFunction::unipolar_func_derivative, double beta = 1.0, double bias = 1.0)
+    Neuron(func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative, double beta = 1.0, double bias = 1.0)
     {
         this->bias = bias;
         this->beta = beta;
-        this->base = activation_func;
-        this->derivative = activation_derivative_func;
+        this->base = activation;
+        this->derivative = activation_derivative;
+
+        std::random_device r;
+        std::default_random_engine gen(r());
+        std::uniform_real_distribution<> dis(0.0, 1.0);
+        for(size_t i{0};i<n;i++)
+            input_weights[i] = dis(gen);
+    }
+
+    /**
+     * Neuron construction, as required arg takes vector of weights
+     * it makes weights random
+     */
+    Neuron(std::array<double, n> &weights, func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative, double beta = 1.0, double bias = 1.0)
+    {
+        this->bias = bias;
+        this->beta = beta;
+        this->base = activation;
+        this->derivative = activation_derivative;
         input_weights = weights;
     }
 
@@ -93,5 +113,6 @@ public:
     {
     }
 };
+
 
 #endif

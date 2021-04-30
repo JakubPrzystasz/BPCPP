@@ -2,8 +2,8 @@
 
 int main()
 {
-    std::array<double, 1> input = {1};
-    auto myNeuron = Neuron<1>(input);
+    std::array<double, 2> input = {1,2};
+    auto myNeuron = Neuron<2>();
 
     std::cout << myNeuron.output(input) << std::endl;
 
