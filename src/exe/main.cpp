@@ -1,14 +1,25 @@
-#include <lib/layer.h>
+#include <lib/net.h>
 
 int main()
 {
-    auto myLayer = Layer<4, 4, 1>();
-    std::array<double, 4> input = {0.4, 0.3, 0.1, 0.83};
-    std::array<double, 4> output;
-    myLayer.feed(input, output);
+    std::random_device r;
+    std::default_random_engine gen(r());
+    std::uniform_real_distribution<double> dis(-10.0, 10.0);
 
-    for(double &val : output)
-        std::cout << val << std::endl;
+    auto myNet = Net();
+    myNet.add_layer(100);
+    myNet.add_layer(1);
+    std::vector<double> input;
+    for (uint32_t i{0}; i < 100; i++)
+    {
+        input.push_back(dis(gen));
+    }
+    std::vector<double> output;
+
+    myNet.feed(input, output);
+
+    for (auto &value : output)
+        std::cout << value << std::endl;
 
     return 0;
 }

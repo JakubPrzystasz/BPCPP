@@ -29,15 +29,20 @@ namespace ActivationFunction
 
 /**
  * Implementation of simple neuron,
- * @arg n number of inputs
- * @arg momentum number of previous momentum m-1, m-2...
  */
-template <size_t n, size_t m>
 class Neuron
 {
-    double input_size = n;
-
 public:
+    /**
+     * Number of weights
+     */
+    uint32_t weights_count;
+
+    /**
+     * Number of weights
+     */
+    uint32_t momentum_count;
+
     /**
      * Bias of neuron
      */
@@ -51,7 +56,7 @@ public:
     /**
      * Vector of input weights, and previous weights
      */
-    std::array<double, n * (m+1)> input_weights;
+    std::vector<double> weights;
 
     /**
      * Pointer to activation function 
@@ -66,11 +71,11 @@ public:
     /**
      * Get output value of neuron from given input value
      */
-    double feed(std::array<double, n> &input)
+    double feed(std::vector<double> &input)
     {
         double output = bias;
-        for (size_t i{0}; i < n; i++)
-            output += input[i] * input_weights[i];
+        for (size_t i{0}; i < weights_count; i++)
+            output += input[i] * weights[i];
 
         return (this->base(output, &(this->beta)));
     }
@@ -78,31 +83,22 @@ public:
     /**
      * Neuron construction, as required arg takes vector of weights
      */
-    Neuron(func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative, double beta = 1.0, double bias = 1.0)
+    Neuron(uint32_t weights_count, uint32_t momentum_count = 1, double bias = 1.0, double beta = 1.0, func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative)
     {
         this->bias = bias;
         this->beta = beta;
         this->base = activation;
         this->derivative = activation_derivative;
+        this->weights_count = weights_count;
+        this->momentum_count = momentum_count;
+
+        this->weights = std::vector<double>(weights_count * (1 + momentum_count), 0);
 
         std::random_device r;
         std::default_random_engine gen(r());
         std::uniform_real_distribution<double> dis(0.0, 1.0);
-        for (size_t i{0}; i < n; i++)
-            input_weights[i] = dis(gen);
-    }
-
-    /**
-     * Neuron construction, as required arg takes vector of weights
-     * it makes weights random
-     */
-    Neuron(std::array<double, n> &weights, func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative, double beta = 1.0, double bias = 1.0)
-    {
-        this->bias = bias;
-        this->beta = beta;
-        this->base = activation;
-        this->derivative = activation_derivative;
-        input_weights = weights;
+        for (double &weight : this->weights)
+            weight = dis(gen);
     }
 
     /**
