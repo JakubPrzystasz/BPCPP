@@ -8,6 +8,7 @@
 #include <cstring>
 #include <iomanip>
 #include <random>
+#include <chrono>
 #include "../matplotlib/matplotlib.h"
 namespace plt = matplotlibcpp;
 

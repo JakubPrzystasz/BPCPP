@@ -5,7 +5,7 @@ if(MSVC)
 else()
 	#g++ compile flags
 	set(CMAKE_CXX_FLAGS "-Wall -msse2 -fno-rtti -pipe -lpython3.8 -I/usr/include/python3.8 -I/home/jakub/.local/lib/python3.8/site-packages/numpy/core/include")
-	set(CMAKE_CXX_FLAGS_DEBUG "-Wall -msse2 -g -fno-rtti -pipe -Wextra -Werror -lpython3.8 -I/usr/include/python3.8 -I/home/jakub/.local/lib/python3.8/site-packages/numpy/core/include")
+	set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -fno-rtti -pipe -Wextra -Werror -lpython3.8 -I/usr/include/python3.8 -I/home/jakub/.local/lib/python3.8/site-packages/numpy/core/include")
 	set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O3 -msse2 -fno-rtti -pipe -lpython3.8 -I/usr/include/python3.8 -I/home/jakub/.local/lib/python3.8/site-packages/numpy/core/include")
 
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")

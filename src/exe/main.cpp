@@ -1,25 +1,54 @@
 #include <lib/net.h>
+#include <fstream>
 
 int main()
 {
-    std::random_device r;
-    std::default_random_engine gen(r());
-    std::uniform_real_distribution<double> dis(-10.0, 10.0);
+    /**
+    0) Class
+    1) Alcohol
+ 	2) Malic acid
+ 	3) Ash
+	4) Alcalinity of ash  
+ 	5) Magnesium
+	6) Total phenols
+ 	7) Flavanoids
+ 	8) Nonflavanoid phenols
+ 	9) Proanthocyanins
+	10)Color intensity
+ 	11)Hue
+ 	12)OD280/OD315 of diluted wines
+ 	13)Proline
+     */
 
-    auto myNet = Net();
-    myNet.add_layer(100);
-    myNet.add_layer(1);
-    std::vector<double> input;
-    for (uint32_t i{0}; i < 100; i++)
+    data_set input;
+    data_set output;
+
+    std::ifstream input_file("INPUT_DATA.txt");
+    for (std::string line; getline(input_file, line);)
     {
-        input.push_back(dis(gen));
+        data_row input_data = std::vector<double>(13, 0);
+        data_row output_data = std::vector<double>(1, 0);
+        sscanf(line.c_str(), "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+               &output_data[0], &input_data[0], &input_data[1], &input_data[2], &input_data[3], &input_data[4],
+               &input_data[5], &input_data[6], &input_data[7], &input_data[8], &input_data[9], &input_data[10],
+               &input_data[11], &input_data[12]);
+        input.push_back(input_data);
+        output.push_back(output_data);
     }
-    std::vector<double> output;
 
-    myNet.feed(input, output);
+    auto myNet = Net(input,output);
+    myNet.add_layer(13);
+    myNet.add_layer(5);
+    myNet.add_layer(1);
 
-    for (auto &value : output)
-        std::cout << value << std::endl;
+    std::vector<double> out = std::vector<double>(1, 0);
+    myNet.feed(input[0], out);
+
+    std::cout << (output[0])[0] - out[0] << std::endl;
+
+    // auto end_time = std::chrono::high_resolution_clock::now();
+    // auto time = end_time - start_time;
+    // std::cout << time / std::chrono::microseconds(1) << "microseconds to run." << std::endl;
 
     return 0;
 }
