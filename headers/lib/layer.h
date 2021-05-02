@@ -1,6 +1,5 @@
-#ifndef LAYER_H
-#define LAYER_H
-#include "includes.h"
+#pragma once 
+
 #include "neuron.h"
 
 class Layer
@@ -30,10 +29,9 @@ public:
      * @arg inputs - vector of input values
      * @arg outputs - vector of outputs values
      */
-    void feed(std::vector<double> &inputs, std::vector<double> &outputs)
-    {
+    inline void feed(std::vector<double> &inputs, std::vector<double> &outputs){
         for (size_t i{0}; i < neuron_count; i++)
-            outputs[i] = neurons[i].feed(inputs);
+        outputs[i] = neurons[i].feed(inputs);
     }
 
     /**
@@ -43,21 +41,10 @@ public:
     * @arg p - number of inputs
     * @arg m - number of previous weights to store
     */
-    Layer(uint32_t n, uint32_t p, uint32_t m = 1, double learning_rate = 0.1, double momentum = 0.1)
-    {
-        this->neuron_count = n;
-        this->momentum_count = m;
-        this->input_count = p;
-        this->learning_rate = learning_rate;
-        this->momentum = momentum;
-        for(uint32_t i{0};i<neuron_count;i++)
-            neurons.push_back(Neuron(p,m));
-    };
+    Layer(uint32_t n, uint32_t p, uint32_t m = 1, double learning_rate = 0.1, double momentum = 0.1);
 
     /**
      * Destructor of single layer
      */
     ~Layer(){};
 };
-
-#endif

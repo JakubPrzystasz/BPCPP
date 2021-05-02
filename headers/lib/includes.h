@@ -1,5 +1,4 @@
-#ifndef INCLUDES_H
-#define INCLUDES_H
+#pragma once
 
 #define _USE_MATH_DEFINES
 #include <iostream>
@@ -9,7 +8,11 @@
 #include <iomanip>
 #include <random>
 #include <chrono>
+#include <fstream>
 #include "../matplotlib/matplotlib.h"
 namespace plt = matplotlibcpp;
 
-#endif
+
+typedef std::vector<double> data_row;
+typedef std::vector<data_row> data_set;
+typedef double (*func_ptr)(double, double *);

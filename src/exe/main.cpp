@@ -1,5 +1,4 @@
 #include <lib/net.h>
-#include <fstream>
 
 void read_data(data_set &input, data_set &target)
 {

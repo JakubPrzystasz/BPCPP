@@ -43,6 +43,9 @@ find_package(Python3 COMPONENTS NumPy)
 target_link_libraries(matplotlib_cpp INTERFACE
     Python3::NumPy
 )
+
+
+
 set(ENGINE_DIR ${PROJECT_SOURCE_DIR}/src/lib)
 
 file(GLOB_RECURSE SRC_FILES 
@@ -53,7 +56,7 @@ file(GLOB_RECURSE SRC_FILES
 
 foreach(FILE ${SRC_FILES})
   message("[Lib]Found source file: ${FILE}")
-  set(ENGINE_SRC ${LAUNCHER_SRC}  ${FILE})
+  set(ENGINE_SRC ${ENGINE_SRC}  ${FILE})
 endforeach(FILE)
 
 add_library(Lib STATIC ${ENGINE_SRC})
@@ -82,7 +85,7 @@ target_sources(Lib PRIVATE ${ENGINE_SRC})
 GroupSources("src/lib" "src/lib" "Source Files")
 
 
-### Executable for testing
+### Executable
 set(LAUNCHER_DIR ${PROJECT_SOURCE_DIR}/src/exe)
 
 file(GLOB_RECURSE SRC_FILES 
