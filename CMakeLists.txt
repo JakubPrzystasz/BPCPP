@@ -97,6 +97,7 @@ foreach(FILE ${SRC_FILES})
 endforeach(FILE)
 
 add_executable(Launcher ${SRC_FILES})
+set_property(TARGET Launcher PROPERTY CXX_STANDARD 20)
 
 set(LauncherHeaders 
   ${PROJECT_SOURCE_DIR}/headers

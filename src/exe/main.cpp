@@ -1,7 +1,7 @@
 #include <lib/net.h>
 #include <fstream>
 
-int main()
+void read_data(data_set &input, data_set &target)
 {
     /**
     0) Class
@@ -19,10 +19,6 @@ int main()
  	12)OD280/OD315 of diluted wines
  	13)Proline
      */
-
-    data_set input;
-    data_set output;
-
     std::ifstream input_file("INPUT_DATA.txt");
     for (std::string line; getline(input_file, line);)
     {
@@ -33,18 +29,21 @@ int main()
                &input_data[5], &input_data[6], &input_data[7], &input_data[8], &input_data[9], &input_data[10],
                &input_data[11], &input_data[12]);
         input.push_back(input_data);
-        output.push_back(output_data);
+        target.push_back(output_data);
     }
+}
 
-    auto myNet = Net(input,output);
+int main()
+{
+    data_set input, target;
+    read_data(input,target);
+
+    auto myNet = Net(input, target);
     myNet.add_layer(13);
     myNet.add_layer(6);
     myNet.add_layer(1);
 
     auto start_time = std::chrono::high_resolution_clock::now();
-
-    std::cout << myNet.feed(1) << std::endl;
-
     auto end_time = std::chrono::high_resolution_clock::now();
     auto time = end_time - start_time;
     std::cout << time / std::chrono::microseconds(1) << " microseconds to run." << std::endl;

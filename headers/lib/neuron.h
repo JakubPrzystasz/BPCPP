@@ -83,7 +83,7 @@ public:
     /**
      * Neuron construction, as required arg takes vector of weights
      */
-    Neuron(uint32_t weights_count, uint32_t momentum_count = 1, double bias = 1.0, double beta = 1.0, func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative)
+    Neuron(uint32_t weights_count, uint32_t momentum_count = 1, double bias = 0.0, double beta = 1.0, func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative)
     {
         this->bias = bias;
         this->beta = beta;
