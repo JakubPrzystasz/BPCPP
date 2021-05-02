@@ -22,6 +22,7 @@ Net::Net(data_set &input, data_set &target)
     this->input = input;
     this->target = target;
     this->cost = data_row(target[0].size(), 0);
+    this->layers_count = 0;
 }
 
 

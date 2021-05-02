@@ -22,6 +22,30 @@ public:
     data_set target;
 
     /**
+     * Returns cost of single input data(SSE)
+     */
+    inline double get_cost(uint32_t row_num)
+    {
+        auto input_row = this->input[row_num];
+        auto target_row = this->target[row_num];
+        double cost_sum = 0;
+        
+        //Feed net with data
+        this->feed(input_row);
+        //Calculate cost for each output neuron
+        auto output_row = this->output[this->layers_count - 1];
+        
+        for (uint32_t i{0}; i < this->output[layers_count - 1].size(); i++)
+        {
+            this->cost[i] = target_row[i] - output_row[i];
+            this->cost[i] = this->cost[i] * this->cost[i];
+            cost_sum += this->cost[i];
+        }
+
+        return cost_sum * 0.5;
+    }
+
+    /**
      *  Feed net with given data
      */
     inline void feed(data_row &input)

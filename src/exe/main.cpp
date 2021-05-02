@@ -40,9 +40,13 @@ int main()
     auto myNet = Net(input, target);
     myNet.add_layer(13);
     myNet.add_layer(6);
+    myNet.add_layer(3);
     myNet.add_layer(1);
 
     auto start_time = std::chrono::high_resolution_clock::now();
+    
+    std::cout << myNet.get_cost(1) << std::endl;
+
     auto end_time = std::chrono::high_resolution_clock::now();
     auto time = end_time - start_time;
     std::cout << time / std::chrono::microseconds(1) << " microseconds to run." << std::endl;
