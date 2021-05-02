@@ -45,7 +45,8 @@ int main()
 
     auto start_time = std::chrono::high_resolution_clock::now();
     
-    std::cout << myNet.get_cost(1) << std::endl;
+    std::cout << myNet.get_cost(0) << std::endl;
+    std::cout << myNet.get_delta(0,0) << std::endl;
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto time = end_time - start_time;

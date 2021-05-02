@@ -5,9 +5,14 @@
 class Net
 {
     /**
-     * Container for output of each layer
+     * Container for output of each neuron in each layer
      */
     data_set output;
+
+    /**
+     * Container for inputs for each neuron in each layer
+     */
+    data_set neurons_inputs;
 
     /**
      * Cost vector
@@ -26,6 +31,27 @@ public:
 
     data_set input;
     data_set target;
+
+
+    inline double get_delta(uint32_t layer_num, uint32_t neuron_num)
+    {
+        if (layer_num == this->layers_count - 1)
+        {   
+            auto neuron = this->layers[layer_num].neurons[neuron_num];
+            double ret = 0;
+            ret = this->cost[neuron_num] * neuron.derivative(this->neurons_inputs[layer_num][neuron_num],&(neuron.beta));
+            return ret;
+        }
+        else
+        {
+            double ret = 0;
+            for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++)
+            {
+                ret += get_delta(layer_num + 1, i);
+            }
+            return ret;
+        }
+    }
 
     /**
      * Returns cost of single input data(SSE)
@@ -56,10 +82,10 @@ public:
      */
     inline void feed(data_row &input)
     {
-        this->layers[0].feed(input, this->output[0]);
+        this->layers[0].feed(input, this->output[0], this->neurons_inputs[0]);
 
         for (uint32_t i{1}; i < layers.size(); i++)
-            this->layers[i].feed(this->output[i - 1], this->output[i]);
+            this->layers[i].feed(this->output[i - 1], this->output[i], this->neurons_inputs[i]);
     }
 
     /**

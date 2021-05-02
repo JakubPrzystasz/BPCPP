@@ -20,8 +20,14 @@ void Net::__add_layer(uint32_t neurons, double learning_rate, double momentum, s
     //Setup helper containers
     this->cost = data_row(this->layers.back().neuron_count);
     this->output.erase(this->output.begin(), this->output.end());
+
+    this->neurons_inputs.erase(this->neurons_inputs.begin(), this->neurons_inputs.end());
+
     for (auto &layer : layers)
+    {
         this->output.push_back(data_row(layer.neuron_count));
+        this->neurons_inputs.push_back(data_row(layer.neuron_count));
+    }
 
     this->layers_count += 1;
 }
