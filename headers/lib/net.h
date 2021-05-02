@@ -32,8 +32,11 @@ public:
     data_set input;
     data_set target;
 
+    inline double get_delta(uint32_t layer_num, uint32_t neuron_num){
+        return __get_delta(layer_num,neuron_num,layer_num,neuron_num);
+    }
 
-    inline double get_delta(uint32_t layer_num, uint32_t neuron_num)
+    inline double __get_delta(uint32_t layer_num, uint32_t neuron_num, uint32_t origin_layer, uint32_t origin_neuron)
     {
         if (layer_num == this->layers_count - 1)
         {   
@@ -45,10 +48,14 @@ public:
         else
         {
             double ret = 0;
-            for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++)
-            {
-                ret += get_delta(layer_num + 1, i);
+            auto neuron = this->layers[layer_num].neurons[neuron_num];
+            for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++){
+                ret += __get_delta(layer_num + 1, i, origin_layer, neuron_num) * this->layers[layer_num +1].neurons[i].weights[neuron_num];
             }
+            //multiply by weight 
+            if(layer_num != origin_layer)
+                ret *= this->layers[layer_num].neurons[neuron_num].weights[origin_neuron];
+            ret *= neuron.derivative(this->neurons_inputs[layer_num][neuron_num],&(neuron.beta));
             return ret;
         }
     }

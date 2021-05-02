@@ -38,15 +38,18 @@ int main()
     read_data(input,target);
 
     auto myNet = Net(input, target);
-    myNet.add_layer(13);
-    myNet.add_layer(6);
     myNet.add_layer(3);
-    myNet.add_layer(1);
+    myNet.add_layer(2);
+    myNet.add_layer(3);
+
 
     auto start_time = std::chrono::high_resolution_clock::now();
+    myNet.get_cost(0);
+    std::cout << myNet.get_delta(0,2) << std::endl;
+    std::cout << myNet.get_delta(1,0) << std::endl;
+    std::cout << myNet.get_delta(2,2) << std::endl;
     
-    std::cout << myNet.get_cost(0) << std::endl;
-    std::cout << myNet.get_delta(0,0) << std::endl;
+    std::cout << "DUPA" << std::endl;
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto time = end_time - start_time;
