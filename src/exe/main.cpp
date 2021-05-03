@@ -42,15 +42,24 @@ int main()
     myNet.add_layer(2);
     myNet.add_layer(3);
 
+    for(auto &layer: myNet.layers){
+        for(auto &neuron: layer.neurons){
+            neuron.bias = 0.0;
+            for(auto &weight: neuron.weights){
+                weight = 0.4;
+            }
+        }
+    }
+
 
     auto start_time = std::chrono::high_resolution_clock::now();
     myNet.get_cost(0);
+    //Delta3
     std::cout << myNet.get_delta(0,2) << std::endl;
+    //Delta4
     std::cout << myNet.get_delta(1,0) << std::endl;
-    std::cout << myNet.get_delta(2,2) << std::endl;
-    
-    std::cout << "DUPA" << std::endl;
-
+    //Delta6
+    std::cout << myNet.get_delta(2,0) << std::endl;
     auto end_time = std::chrono::high_resolution_clock::now();
     auto time = end_time - start_time;
     std::cout << time / std::chrono::microseconds(1) << " microseconds to run." << std::endl;

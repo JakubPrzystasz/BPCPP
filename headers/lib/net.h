@@ -41,20 +41,23 @@ public:
         if (layer_num == this->layers_count - 1)
         {   
             auto neuron = this->layers[layer_num].neurons[neuron_num];
-            double ret = 0;
-            ret = this->cost[neuron_num] * neuron.derivative(this->neurons_inputs[layer_num][neuron_num],&(neuron.beta));
-            return ret;
+            double weight = 1.0;
+            if(layer_num != origin_layer)
+                weight = this->layers[layer_num].neurons[neuron_num].weights[origin_neuron];
+
+            return (weight * this->cost[neuron_num] * neuron.derivative(this->neurons_inputs[layer_num][neuron_num],&(neuron.beta)));
         }
         else
         {
             double ret = 0;
             auto neuron = this->layers[layer_num].neurons[neuron_num];
-            for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++){
-                ret += __get_delta(layer_num + 1, i, origin_layer, neuron_num) * this->layers[layer_num +1].neurons[i].weights[neuron_num];
-            }
+            for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++)
+                ret += __get_delta(layer_num + 1, i, layer_num, origin_layer);
+
             //multiply by weight 
             if(layer_num != origin_layer)
                 ret *= this->layers[layer_num].neurons[neuron_num].weights[origin_neuron];
+
             ret *= neuron.derivative(this->neurons_inputs[layer_num][neuron_num],&(neuron.beta));
             return ret;
         }
