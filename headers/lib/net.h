@@ -4,6 +4,8 @@
 
 class Net
 {
+    
+public:
     /**
      * Container for output of each neuron in each layer
      */
@@ -43,7 +45,7 @@ public:
             auto neuron = this->layers[layer_num].neurons[neuron_num];
             double weight = 1.0;
             if(layer_num != origin_layer)
-                weight = this->layers[layer_num].neurons[neuron_num].weights[origin_neuron];
+                weight = neuron.weights[origin_neuron];
 
             return (weight * this->cost[neuron_num] * neuron.derivative(this->neurons_inputs[layer_num][neuron_num],&(neuron.beta)));
         }
@@ -52,7 +54,7 @@ public:
             double ret = 0;
             auto neuron = this->layers[layer_num].neurons[neuron_num];
             for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++)
-                ret += __get_delta(layer_num + 1, i, layer_num, origin_layer);
+                ret += __get_delta(layer_num + 1, i, layer_num, neuron_num);
 
             //multiply by weight 
             if(layer_num != origin_layer)
