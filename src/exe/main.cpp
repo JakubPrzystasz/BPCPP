@@ -79,20 +79,14 @@ int main()
 
     // std::cout << std::endl;
 
-    const uint32_t runs = 1000000;
+    const uint32_t runs = 10;
     std::array<uint32_t, runs> run_time = std::array<uint32_t, runs>();
 
     for (uint32_t i{0}; i < runs; i++)
     {
         auto start_time = std::chrono::high_resolution_clock::now();
         myNet.get_cost(i % input.size());
-        for (uint32_t layers{0}; layers < myNet.layers_count; layers++)
-        {
-            for (uint32_t neurons{0}; neurons < myNet.layers[layers].neuron_count; neurons++)
-            {
-                myNet.get_delta(layers, neurons);
-            }
-        }
+        myNet.fit();
         auto end_time = std::chrono::high_resolution_clock::now();
         auto time = end_time - start_time;
         run_time[i] = time / std::chrono::microseconds(1);
@@ -104,7 +98,7 @@ int main()
 
     mean /= runs;
 
-    std::cout << mean << " microseconds for get_delta for each neuron " << runs << "times" << std::endl;
+    std::cout << "get_delta: " << mean << " microseconds (mean) for each neuron in " << runs << " runs" << std::endl;
 
     return 0;
 }

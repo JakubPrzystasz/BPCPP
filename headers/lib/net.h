@@ -4,8 +4,8 @@
 
 class Net
 {
-    
-public:
+    uint32_t layers_count;
+
     /**
      * Container for output of each neuron in each layer
      */
@@ -20,9 +20,42 @@ public:
      * Cost vector
      */
     data_row cost;
-    uint32_t layers_count;
 
+    vector<
+
+    /**
+     * Size of batch
+     */
+    uint32_t batch_size;
+    
     void __add_layer(uint32_t neurons, double learning_rate, double momentum, size_t prev_weights);
+
+    inline double __get_delta(uint32_t layer_num, uint32_t neuron_num, uint32_t origin_layer, uint32_t origin_neuron)
+    {
+        if (layer_num == this->layers_count - 1)
+        {
+            auto neuron = this->layers[layer_num].neurons[neuron_num];
+            double weight = 1.0;
+            if (layer_num != origin_layer)
+                weight = neuron.weights[origin_neuron];
+
+            return (weight * this->cost[neuron_num] * neuron.derivative(this->neurons_inputs[layer_num][neuron_num], &(neuron.beta)));
+        }
+        else
+        {
+            double ret = 0;
+            auto neuron = this->layers[layer_num].neurons[neuron_num];
+            for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++)
+                ret += __get_delta(layer_num + 1, i, layer_num, neuron_num);
+
+            //multiply by weight
+            if (layer_num != origin_layer)
+                ret *= this->layers[layer_num].neurons[neuron_num].weights[origin_neuron];
+
+            ret *= neuron.derivative(this->neurons_inputs[layer_num][neuron_num], &(neuron.beta));
+            return ret;
+        }
+    }
 
 public:
     double learning_rate;
@@ -34,35 +67,14 @@ public:
     data_set input;
     data_set target;
 
-    inline double get_delta(uint32_t layer_num, uint32_t neuron_num){
-        return __get_delta(layer_num,neuron_num,layer_num,neuron_num);
-    }
+    void set_batch_size(uint32_t size);
 
-    inline double __get_delta(uint32_t layer_num, uint32_t neuron_num, uint32_t origin_layer, uint32_t origin_neuron)
+    /**
+     *  Get delta for given neuron
+     */
+    inline double get_delta(uint32_t layer_num, uint32_t neuron_num)
     {
-        if (layer_num == this->layers_count - 1)
-        {   
-            auto neuron = this->layers[layer_num].neurons[neuron_num];
-            double weight = 1.0;
-            if(layer_num != origin_layer)
-                weight = neuron.weights[origin_neuron];
-
-            return (weight * this->cost[neuron_num] * neuron.derivative(this->neurons_inputs[layer_num][neuron_num],&(neuron.beta)));
-        }
-        else
-        {
-            double ret = 0;
-            auto neuron = this->layers[layer_num].neurons[neuron_num];
-            for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++)
-                ret += __get_delta(layer_num + 1, i, layer_num, neuron_num);
-
-            //multiply by weight 
-            if(layer_num != origin_layer)
-                ret *= this->layers[layer_num].neurons[neuron_num].weights[origin_neuron];
-
-            ret *= neuron.derivative(this->neurons_inputs[layer_num][neuron_num],&(neuron.beta));
-            return ret;
-        }
+        return __get_delta(layer_num, neuron_num, layer_num, neuron_num);
     }
 
     /**
@@ -101,10 +113,31 @@ public:
     }
 
     /**
+     * Basing on cost vector, fits network
+     */
+    inline void fit()
+    {
+        //First get deltas
+        // for (uint32_t layers{0}; layers < this->layers_count; layers++)
+        // {
+        //     for (uint32_t neurons{0}; neurons < this->layers[layers].neuron_count; neurons++)
+        //         this->layers[layers].neurons[neurons].delta = this->get_delta(layers, neurons);
+        // }
+        for(auto &layer: this->layers){
+            for(auto &neuron: layer.neurons){
+                
+            }
+        }
+    }
+
+    /**
      * Add layer to net
      */
     void add_layer(uint32_t neurons, double learning_rate, double momentum, size_t prev_weights);
 
+    /**
+     * Add layer to net
+     */
     void add_layer(uint32_t neurons);
 
     /**

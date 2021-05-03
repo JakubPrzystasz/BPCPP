@@ -43,4 +43,15 @@ Net::Net(data_set &input, data_set &target, double learning_rate, double momentu
     this->prev_weights = prev_weights;
 }
 
+void Net::set_batch_size(uint32_t size){
+    this->batch_size = size;
+    for(auto &layer: this->layers){
+        for(auto &neuron: layer.neurons){
+            neuron.batch_weights = data_set(size);
+            neuron.batch_bias = data_row(size);
+            neuron.batch_size = size;
+        }
+    }
+}
+
 Net::~Net() {}
