@@ -4,25 +4,25 @@
 
 namespace ActivationFunction
 {
-  /**
+   /**
  * Unipolar neuron activation function - as parameter it takes array of one element (Beta constant)
  */
-  double unipolar(double input, double *params);
+   double unipolar(double input, double *params);
 
-  /**
+   /**
  * Unipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
  */
-  double unipolar_derivative(double base_output, double *params);
+   double unipolar_derivative(double base_output, double *params);
 
-  /**
+   /**
  * Bipolar neuron activation function - as parameter it takes array of one element (Beta constant)
  */
-  double bipolar(double input, double *params);
+   double bipolar(double input, double *params);
 
-  /**
+   /**
  * Bipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
  */
-  double bipolar_derivative(double base_output, double *params);
+   double bipolar_derivative(double base_output, double *params);
 };
 
 /**
@@ -31,85 +31,86 @@ namespace ActivationFunction
 class Neuron
 {
 public:
-  data_set batch_weights;
-  data_row batch_bias;
-  uint32_t batch_size;
+   data_set batch_weights;
+   data_row batch_bias;
+   uint32_t batch_size;
 
-  inline void fit()
-  {
-    this->bias = 0;
-    for (auto &value : this->batch_bias)
-      this->bias += value;
-    this->bias /= batch_size;
+   inline void fit()
+   {
+     //TODO: ADD MOMENTUM
+      this->bias = 0;
+      for (auto &value : this->batch_bias)
+         this->bias += value;
+      this->bias /= batch_size;
 
-    this->weights = data_row(weights_count, 0);
+      this->weights = data_row(weights_count, 0);
 
-    for (auto &row : this->batch_weights)
-    {
-      for (uint32_t i{0}; i < weights_count; i++)
+      for (auto &row : this->batch_weights)
       {
-        this->weights[i] += row[i];
+         for (uint32_t i{0}; i < weights_count; i++)
+         {
+            this->weights[i] += row[i];
+         }
       }
-    }
 
-    for (uint32_t i{0}; i < weights_count; i++)
-      this->weights[i] /= batch_size;
-  }
+      for (uint32_t i{0}; i < weights_count; i++)
+         this->weights[i] /= batch_size;
+   }
 
-  /**
+   /**
      * Number of weights
      */
-  uint32_t weights_count;
+   uint32_t weights_count;
 
-  /**
+   /**
      * Number of weights
      */
-  uint32_t momentum_count;
+   uint32_t momentum_count;
 
-  /**
+   /**
      * Bias of neuron
      */
-  double bias;
+   double bias;
 
-  /**
+   /**
      * Beta parameter
      */
-  double beta;
+   double beta;
 
-  /**
+   /**
      * Vector of input weights, and previous weights(momentum)
      */
-  data_row weights;
+   data_row weights;
 
-  /**
+   /**
      * Pointer to activation function 
      */
-  func_ptr base;
+   func_ptr base;
 
-  /**
+   /**
      * Pointer to activation function derivative
      */
-  func_ptr derivative;
+   func_ptr derivative;
 
-  /**
+   /**
      * Get output value of neuron from given input value
      */
-  inline double feed(data_row &inputs, double &input_value)
-  {
-    input_value = bias;
-    for (size_t i{0}; i < weights_count; i++)
-      input_value += inputs[i] * weights[i];
+   inline double feed(data_row &inputs, double &input_value)
+   {
+      input_value = bias;
+      for (size_t i{0}; i < weights_count; i++)
+         input_value += inputs[i] * weights[i];
 
-    return this->base(input_value, &(this->beta));
-  }
+      return this->base(input_value, &(this->beta));
+   }
 
-  /**
+   /**
      * Neuron construction, as required arg takes vector of weights
      */
-  Neuron(uint32_t weights_count, uint32_t momentum_count = 1, double bias = 0.0, double beta = 1.0, func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative);
+   Neuron(uint32_t weights_count, uint32_t momentum_count = 1, double bias = 0.0, double beta = 1.0, func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative);
 
-  /**
+   /**
      * Class destructor 
      */
-  ~Neuron();
+   ~Neuron();
 };

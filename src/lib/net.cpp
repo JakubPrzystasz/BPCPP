@@ -48,7 +48,9 @@ void Net::set_batch_size(uint32_t size){
     for(auto &layer: this->layers){
         for(auto &neuron: layer.neurons){
             neuron.batch_weights = data_set(size);
-            neuron.batch_bias = data_row(size);
+            for(auto &weight: neuron.batch_weights)
+                weight = data_row(neuron.weights_count,0);
+            neuron.batch_bias = data_row(size,0);
             neuron.batch_size = size;
         }
     }

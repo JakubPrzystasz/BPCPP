@@ -21,13 +21,11 @@ class Net
      */
     data_row cost;
 
-    vector<
-
     /**
      * Size of batch
      */
     uint32_t batch_size;
-    
+
     void __add_layer(uint32_t neurons, double learning_rate, double momentum, size_t prev_weights);
 
     inline double __get_delta(uint32_t layer_num, uint32_t neuron_num, uint32_t origin_layer, uint32_t origin_neuron)
@@ -67,6 +65,42 @@ public:
     data_set input;
     data_set target;
 
+    /**
+     * Train network
+     */
+    inline void train(std::vector<uint32_t> input_rows, data_row &costs)
+    {
+        for (uint32_t i{0}; i < this->batch_size; i++)
+        {
+            //Get cost for each input value
+            costs[i] = this->get_cost(input_rows[i]);
+
+            //First get deltas
+            //then calculate weights and biases and put them in array
+
+            for (uint32_t layers{0}; layers < this->layers_count; layers++)
+            {
+                for (uint32_t neurons{0}; neurons < this->layers[layers].neuron_count; neurons++){
+                    Neuron &neuron = this->layers[layers].neurons[neurons];
+                    double delta = this->get_delta(layers, neurons);
+                    neuron.batch_bias[i] = neuron.bias + this->layers[layers].learning_rate * delta;
+                    
+                    for(uint32_t weights{0};weights < neuron.weights_count;weights++){
+                        double out = 0;
+                        if(layers == 0)
+                            out = this->input[i][weights];
+                        else
+                            out = this->output[layers-1][weights];
+                        neuron.batch_weights[i][weights] = neuron.weights[weights] + out * this->layers[layers].learning_rate * delta;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Set size of batch
+     */
     void set_batch_size(uint32_t size);
 
     /**
@@ -117,16 +151,10 @@ public:
      */
     inline void fit()
     {
-        //First get deltas
-        // for (uint32_t layers{0}; layers < this->layers_count; layers++)
-        // {
-        //     for (uint32_t neurons{0}; neurons < this->layers[layers].neuron_count; neurons++)
-        //         this->layers[layers].neurons[neurons].delta = this->get_delta(layers, neurons);
-        // }
-        for(auto &layer: this->layers){
-            for(auto &neuron: layer.neurons){
-                
-            }
+        for (auto &layer : this->layers)
+        {
+            for (auto &neuron : layer.neurons)
+                neuron.fit();
         }
     }
 
@@ -145,7 +173,7 @@ public:
      *  @arg input - input data set
      *  @arg target - target data set
      */
-    Net(data_set &input, data_set &target, double learning_rate = 0.1, double momentum = 0.1, size_t prev_weights = 1);
+    Net(data_set &input, data_set &target, double learning_rate = 0.9, double momentum = 0.1, size_t prev_weights = 1);
 
     ~Net();
 };

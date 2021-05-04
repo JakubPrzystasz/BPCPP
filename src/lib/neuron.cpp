@@ -38,8 +38,8 @@ Neuron::Neuron(uint32_t weights_count, uint32_t momentum_count, double bias, dou
     std::random_device r;
     std::default_random_engine gen(r());
     std::uniform_real_distribution<double> dis(0.0, 1.0);
-    for (double &weight : this->weights)
-        weight = dis(gen);
+    for (uint32_t i{0};i<this->weights_count;i++)
+        this->weights[i] = dis(gen);
 }
 
 
