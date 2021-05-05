@@ -1,5 +1,6 @@
 #pragma once
 
+#define _CRT_SECURE_NO_WARNINGS
 #define _USE_MATH_DEFINES
 #include <iostream>
 #include <string>
@@ -9,8 +10,8 @@
 #include <random>
 #include <chrono>
 #include <fstream>
-#include "../matplotlib/matplotlib.h"
-namespace plt = matplotlibcpp;
+// #include "../matplotlib/matplotlib.h"
+// namespace plt = matplotlibcpp;
 
 
 typedef std::vector<double> data_row;

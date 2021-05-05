@@ -30,7 +30,7 @@ public:
      * @arg outputs - vector of outputs values
      */
     inline void feed(std::vector<double> &inputs, std::vector<double> &outputs, std::vector<double> &input_values){
-        for (size_t i{0}; i < neuron_count; i++)
+        for (uint32_t i{0}; i < neuron_count; i++)
             outputs[i] = neurons[i].feed(inputs,input_values[i]);
     }
 

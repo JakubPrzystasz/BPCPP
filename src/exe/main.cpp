@@ -39,80 +39,26 @@ int main()
 
     auto myNet = Net(input, target);
     myNet.add_layer(13);
-    myNet.add_layer(7);
+    myNet.add_layer(9);
     myNet.add_layer(3);
-    myNet.add_layer(1);
 
-    myNet.set_batch_size(1);
+    myNet.set_batch_size(input.size());
 
-    std::vector<uint32_t> input_vec = std::vector<uint32_t>(1,0);
-    data_row costs(1,0);
+    std::vector<uint32_t> input_vec = std::vector<uint32_t>(input.size());
+    for(uint32_t i{0};i<input.size();i++)
+        input_vec[i] = i;
+        
+    data_row costs(input.size(),0);
 
     for(uint32_t i{0};i<1000;i++){
         myNet.train(input_vec,costs);
         myNet.fit();
-        if(costs[0] < 0.1)
-            std::cout << costs[0] << std::endl;
+        double SSE = 0;
+        for(auto &value: costs)
+            SSE += value;
+        std::cout << i << std::endl;
+        std::cout << (SSE/input.size()) << std::endl;
     }
-
-
-    // for(auto &layer: myNet.layers){
-    //     for(auto &neuron: layer.neurons){
-    //         neuron.bias = 0.0;
-    //         for(auto &weight: neuron.weights){
-    //             weight = 0.4;
-    //         }
-    //     }
-    // }
-
-    //print debug info
-    // std::cout << std::endl;
-    // std::cout <<
-    //     myNet.cost[0] << std::endl <<
-    //     myNet.cost[1] << std::endl <<
-    //     myNet.cost[2] << std::endl <<
-
-    //     myNet.neurons_inputs[2][0] << std::endl <<
-    //     myNet.neurons_inputs[2][1] << std::endl <<
-    //     myNet.neurons_inputs[2][2] << std::endl <<
-
-    //     myNet.neurons_inputs[1][0] << std::endl <<
-    //     myNet.neurons_inputs[1][1] << std::endl <<
-
-    //     myNet.neurons_inputs[0][2] << std::endl <<
-
-    //     myNet.layers[2].neurons[0].weights[0] << std::endl <<
-    //     myNet.layers[2].neurons[1].weights[0] << std::endl <<
-    //     myNet.layers[2].neurons[2].weights[0] << std::endl <<
-    //     myNet.layers[2].neurons[0].weights[1] << std::endl <<
-    //     myNet.layers[2].neurons[1].weights[1] << std::endl <<
-    //     myNet.layers[2].neurons[2].weights[1] << std::endl <<
-
-    //     myNet.layers[1].neurons[0].weights[2] << std::endl <<
-    //     myNet.layers[1].neurons[1].weights[2] << std::endl;
-
-    // std::cout << std::endl;
-
-    // const uint32_t runs = 10;
-    // std::array<uint32_t, runs> run_time = std::array<uint32_t, runs>();
-
-    // for (uint32_t i{0}; i < runs; i++)
-    // {
-    //     auto start_time = std::chrono::high_resolution_clock::now();
-    //     myNet.get_cost(i % input.size());
-    //     myNet.fit();
-    //     auto end_time = std::chrono::high_resolution_clock::now();
-    //     auto time = end_time - start_time;
-    //     run_time[i] = time / std::chrono::microseconds(1);
-    // }
-
-    // double mean = 0;
-    // for (auto &value : run_time)
-    //     mean += value;
-
-    // mean /= runs;
-
-    // std::cout << "get_delta: " << mean << " microseconds (mean) for each neuron in " << runs << " runs" << std::endl;
 
     return 0;
 }

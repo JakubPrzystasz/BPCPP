@@ -1,6 +1,6 @@
 #include "net.h"
 
-void Net::add_layer(uint32_t neurons, double learning_rate, double momentum, size_t prev_weights)
+void Net::add_layer(uint32_t neurons, double learning_rate, double momentum, uint32_t prev_weights)
 {
     this->__add_layer(neurons, learning_rate, momentum, prev_weights);
 }
@@ -10,7 +10,7 @@ void Net::add_layer(uint32_t neurons)
     this->__add_layer(neurons, this->learning_rate, this->momentum, this->prev_weights);
 }
 
-void Net::__add_layer(uint32_t neurons, double learning_rate, double momentum, size_t prev_weights)
+void Net::__add_layer(uint32_t neurons, double learning_rate, double momentum, uint32_t prev_weights)
 {
     if (this->layers.size() < 1)
         this->layers.push_back(Layer(neurons, neurons, prev_weights, learning_rate, momentum));
@@ -32,7 +32,7 @@ void Net::__add_layer(uint32_t neurons, double learning_rate, double momentum, s
     this->layers_count += 1;
 }
 
-Net::Net(data_set &input, data_set &target, double learning_rate, double momentum, size_t prev_weights)
+Net::Net(data_set &input, data_set &target, double learning_rate, double momentum, uint32_t prev_weights)
 {
     this->input = input;
     this->target = target;

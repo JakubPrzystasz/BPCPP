@@ -1,6 +1,7 @@
 #pragma once
 
 #include "includes.h"
+#include <cmath>
 
 namespace ActivationFunction
 {
@@ -37,24 +38,32 @@ public:
 
    inline void fit()
    {
-     //TODO: ADD MOMENTUM
       this->bias = 0;
       for (auto &value : this->batch_bias)
          this->bias += value;
-      this->bias /= batch_size;
 
-      this->weights = data_row(weights_count, 0);
+      this->bias = this->bias / batch_size;
 
+      //move last used weights to next array:
+      for (uint32_t x{1}; x <= this->momentum_count; x++)
+      {
+         for (uint32_t i{0}; i < this->weights_count; i++)
+            this->weights[i + (x * this->weights_count)] = this->weights[i + ((x - 1) * this->weights_count)];
+      }
+
+      for (uint32_t i{0}; i < this->weights_count; i++)
+         this->weights[i] = 0;
+
+      //calculate new weights according to mean of weights in batch
       for (auto &row : this->batch_weights)
       {
          for (uint32_t i{0}; i < weights_count; i++)
-         {
             this->weights[i] += row[i];
-         }
       }
 
-      for (uint32_t i{0}; i < weights_count; i++)
-         this->weights[i] /= batch_size;
+      for (uint32_t i{0}; i < this->weights_count; i++){
+         this->weights[i] = this->weights[i] / this->batch_size;
+      }
    }
 
    /**
@@ -98,7 +107,7 @@ public:
    inline double feed(data_row &inputs, double &input_value)
    {
       input_value = bias;
-      for (size_t i{0}; i < weights_count; i++)
+      for (uint32_t i{0}; i < weights_count; i++)
          input_value += inputs[i] * weights[i];
 
       return this->base(input_value, &(this->beta));

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "layer.h"
+#include <cmath>
 
 class Net
 {
@@ -26,7 +27,7 @@ class Net
      */
     uint32_t batch_size;
 
-    void __add_layer(uint32_t neurons, double learning_rate, double momentum, size_t prev_weights);
+    void __add_layer(uint32_t neurons, double learning_rate, double momentum, uint32_t prev_weights);
 
     inline double __get_delta(uint32_t layer_num, uint32_t neuron_num, uint32_t origin_layer, uint32_t origin_neuron)
     {
@@ -36,14 +37,14 @@ class Net
             double weight = 1.0;
             if (layer_num != origin_layer)
                 weight = neuron.weights[origin_neuron];
-
-            return (weight * this->cost[neuron_num] * neuron.derivative(this->neurons_inputs[layer_num][neuron_num], &(neuron.beta)));
+            double ret = (weight * this->cost[neuron_num] * neuron.derivative(this->neurons_inputs[layer_num][neuron_num], &(neuron.beta)));
+            return ret;
         }
         else
         {
             double ret = 0;
             auto neuron = this->layers[layer_num].neurons[neuron_num];
-            for (uint32_t i{0}; i < this->layers[layer_num + 1].neurons.size(); i++)
+            for (uint32_t i{0}; i < this->layers[layer_num + static_cast<uint32_t>(1)].neurons.size(); i++)
                 ret += __get_delta(layer_num + 1, i, layer_num, neuron_num);
 
             //multiply by weight
@@ -161,7 +162,7 @@ public:
     /**
      * Add layer to net
      */
-    void add_layer(uint32_t neurons, double learning_rate, double momentum, size_t prev_weights);
+    void add_layer(uint32_t neurons, double learning_rate, double momentum, uint32_t prev_weights);
 
     /**
      * Add layer to net
@@ -173,7 +174,7 @@ public:
      *  @arg input - input data set
      *  @arg target - target data set
      */
-    Net(data_set &input, data_set &target, double learning_rate = 0.9, double momentum = 0.1, size_t prev_weights = 1);
+    Net(data_set &input, data_set &target, double learning_rate = 0.01, double momentum = 0.1, uint32_t prev_weights = 1);
 
     ~Net();
 };
