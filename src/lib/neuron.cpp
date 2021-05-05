@@ -4,22 +4,23 @@ namespace ActivationFunction
 {
     double unipolar(double input, double *params)
     {
-        return 1.0 / (1.0 + pow(M_E, -((*params) * input)));
+        return (1.0 / (1.0 + pow(M_E, -((*params) * input))));
     }
 
     double unipolar_derivative(double base_output, double *params)
     {
-        return (*params) * base_output * (1.0 - base_output);
+        double ret = ((*params) * base_output * (1.0 - base_output));
+        return ret;
     }
 
     double bipolar(double input, double *params)
     {
-        return 2.0 / (1.0 + pow(M_E, -1 * ((*params) * input)) - 1.0);
+        return (2.0 / (1.0 + pow(M_E, -1 * ((*params) * input)) - 1.0));
     }
 
     double bipolar_derivative(double base_output, double *params)
     {
-        return (*params) * (1.0 - pow(base_output, 2.0));
+        return ((*params) * (1.0 - pow(base_output, 2.0)));
     }
 };
 
@@ -37,7 +38,7 @@ Neuron::Neuron(uint32_t weights_count, uint32_t momentum_count, double bias, dou
 
     std::random_device r;
     std::default_random_engine gen(r());
-    std::uniform_real_distribution<double> dis(0.0, 1.0);
+    std::uniform_real_distribution<double> dis(-0.5, 0.5);
     for (uint32_t i{0};i<this->weights_count;i++)
         this->weights[i] = dis(gen);
 }

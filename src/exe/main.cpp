@@ -41,7 +41,6 @@ int main()
     myNet.add_layer(13);
     myNet.add_layer(6);
     myNet.add_layer(3);
-    myNet.add_layer(1);
 
     myNet.set_batch_size(input.size());
 
@@ -51,16 +50,18 @@ int main()
         
     data_row costs(input.size(),0);
 
-    for(uint32_t i{0};i<1000;i++){
+    for(uint32_t i{0};i<100000;i++){
         myNet.train(input_vec,costs);
         myNet.fit();
         double SSE = 0;
         for(auto &value: costs)
             SSE += value;
+        SSE = SSE / input.size();
+
         std::cout << i << std::endl;
-        if(std::isnan(SSE))
+        std::cout << SSE << std::endl;
+        if(std::isnan(SSE) || std::isinf(SSE))
             break;
-        std::cout << (SSE/input.size()) << std::endl;
     }
 
     return 0;

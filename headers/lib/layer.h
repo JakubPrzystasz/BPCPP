@@ -8,9 +8,6 @@ public:
     uint32_t neuron_count;
     uint32_t input_count;
     uint32_t momentum_count;
-
-    double delta;
-
     /**
      * Learning rate for layer
      */
