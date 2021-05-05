@@ -77,42 +77,49 @@ public:
             costs[i] = this->get_cost(input_rows[i]);
 
             //delta
-            for (uint32_t layer{this->layers_count - 2};; layer--)
+            for (uint32_t layer{this->layers_count - 1};; layer--)
             {
                 for (uint32_t neuron{0}; neuron < this->layers[layer].neuron_count; neuron++)
                 {
-                    auto &_neuron = this->layers[layer].neurons[neuron];
+                    Neuron *_neuron = &(this->layers[layer].neurons[neuron]);
 
-                    if (layer == this->layers_count - 1)
-                        _neuron.delta = this->cost[neuron] * _neuron.derivative(this->neurons_inputs[layer][neuron], &_neuron.beta);
+                    if (layer == (this->layers_count - 1))
+                        _neuron->delta = this->cost[neuron] * _neuron->derivative(this->neurons_inputs[layer][neuron], &_neuron->beta);
                     else
                     {
                         double sum = 0;
-                        for (uint32_t next{0}; next < this->layers[layer+1].neuron_count; next++)
+                        for (uint32_t next{0}; next < this->layers[layer + 1].neuron_count; next++)
                         {
                             auto &next_neuron = this->layers[layer + 1].neurons[next];
                             sum += next_neuron.weights[neuron] * next_neuron.delta;
                         }
                         //calculate the delta for current neuron
-                        _neuron.delta = sum * _neuron.derivative(this->neurons_inputs[layer][neuron], &_neuron.beta);
+                        _neuron->delta = sum * _neuron->derivative(this->neurons_inputs[layer][neuron], &_neuron->beta);
                     }
+                }
+                if (!layer)
+                    break;
+            }
+
+            for (uint32_t layer{0}; layer < this->layers_count; layer++)
+            {
+                for (uint32_t neuron{0}; neuron < this->layers[layer].neuron_count; neuron++)
+                {
+                    Neuron *_neuron = &(this->layers[layer].neurons[neuron]);
 
                     //then calculate weights and biases and put them in array
-                    _neuron.batch_bias[i] = _neuron.bias - this->layers[layer].learning_rate * _neuron.delta;
+                    _neuron->batch_bias[i] = _neuron->bias - this->layers[layer].learning_rate * _neuron->delta;
 
-                    for (uint32_t weights{0}; weights < _neuron.weights_count; weights++)
+                    for (uint32_t weights{0}; weights < _neuron->weights_count; weights++)
                     {
                         double out = 0;
                         if (layer == 0)
                             out = this->input[i][weights];
                         else
                             out = this->output[layer - 1][weights];
-                        _neuron.batch_weights[i][weights] = _neuron.weights[weights] - out * this->layers[layer].learning_rate * _neuron.delta;
+                        _neuron->batch_weights[i][weights] = _neuron->weights[weights] - out * this->layers[layer].learning_rate * _neuron->delta;
                     }
                 }
-
-                if (!layer)
-                    break;
             }
         }
     }
@@ -135,7 +142,7 @@ public:
         //Feed net with data
         this->feed(input_row);
         //Calculate cost for each output neuron
-        auto output_row = this->output[this->layers_count - 1];
+        auto &output_row = this->output[this->layers_count - 1];
 
         for (uint32_t i{0}; i < this->output[layers_count - 1].size(); i++)
         {

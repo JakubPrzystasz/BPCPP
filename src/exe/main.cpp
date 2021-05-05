@@ -40,15 +40,8 @@ int main()
     auto myNet = Net(input, target);
     myNet.add_layer(13);
     myNet.add_layer(6);
+    myNet.add_layer(3);
     myNet.add_layer(1);
-
-    for(auto &layer:myNet.layers){
-        for(auto &neuron: layer.neurons){
-            neuron.bias = 0.5;
-            for(auto &weight:neuron.weights)
-                weight = 0.5;
-        }
-    }
 
     myNet.set_batch_size(input.size());
 
@@ -65,6 +58,8 @@ int main()
         for(auto &value: costs)
             SSE += value;
         std::cout << i << std::endl;
+        if(std::isnan(SSE))
+            break;
         std::cout << (SSE/input.size()) << std::endl;
     }
 
