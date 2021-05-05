@@ -36,6 +36,8 @@ public:
    data_row batch_bias;
    uint32_t batch_size;
 
+   double delta;
+
    inline void fit()
    {
       this->bias = 0;

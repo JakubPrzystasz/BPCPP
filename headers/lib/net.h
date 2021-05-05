@@ -76,25 +76,43 @@ public:
             //Get cost for each input value
             costs[i] = this->get_cost(input_rows[i]);
 
-            //First get deltas
-            //then calculate weights and biases and put them in array
-
-            for (uint32_t layers{0}; layers < this->layers_count; layers++)
+            //delta
+            for (uint32_t layer{this->layers_count - 2};; layer--)
             {
-                for (uint32_t neurons{0}; neurons < this->layers[layers].neuron_count; neurons++){
-                    Neuron &neuron = this->layers[layers].neurons[neurons];
-                    double delta = this->get_delta(layers, neurons);
-                    neuron.batch_bias[i] = neuron.bias + this->layers[layers].learning_rate * delta;
-                    
-                    for(uint32_t weights{0};weights < neuron.weights_count;weights++){
+                for (uint32_t neuron{0}; neuron < this->layers[layer].neuron_count; neuron++)
+                {
+                    auto &_neuron = this->layers[layer].neurons[neuron];
+
+                    if (layer == this->layers_count - 1)
+                        _neuron.delta = this->cost[neuron] * _neuron.derivative(this->neurons_inputs[layer][neuron], &_neuron.beta);
+                    else
+                    {
+                        double sum = 0;
+                        for (uint32_t next{0}; next < this->layers[layer+1].neuron_count; next++)
+                        {
+                            auto &next_neuron = this->layers[layer + 1].neurons[next];
+                            sum += next_neuron.weights[neuron] * next_neuron.delta;
+                        }
+                        //calculate the delta for current neuron
+                        _neuron.delta = sum * _neuron.derivative(this->neurons_inputs[layer][neuron], &_neuron.beta);
+                    }
+
+                    //then calculate weights and biases and put them in array
+                    _neuron.batch_bias[i] = _neuron.bias - this->layers[layer].learning_rate * _neuron.delta;
+
+                    for (uint32_t weights{0}; weights < _neuron.weights_count; weights++)
+                    {
                         double out = 0;
-                        if(layers == 0)
+                        if (layer == 0)
                             out = this->input[i][weights];
                         else
-                            out = this->output[layers-1][weights];
-                        neuron.batch_weights[i][weights] = neuron.weights[weights] + out * this->layers[layers].learning_rate * delta;
+                            out = this->output[layer - 1][weights];
+                        _neuron.batch_weights[i][weights] = _neuron.weights[weights] - out * this->layers[layer].learning_rate * _neuron.delta;
                     }
                 }
+
+                if (!layer)
+                    break;
             }
         }
     }
@@ -102,15 +120,8 @@ public:
     /**
      * Set size of batch
      */
-    void set_batch_size(uint32_t size);
-
-    /**
-     *  Get delta for given neuron
-     */
-    inline double get_delta(uint32_t layer_num, uint32_t neuron_num)
-    {
-        return __get_delta(layer_num, neuron_num, layer_num, neuron_num);
-    }
+    void
+    set_batch_size(uint32_t size);
 
     /**
      * Returns cost of single input data(SSE)
@@ -174,7 +185,7 @@ public:
      *  @arg input - input data set
      *  @arg target - target data set
      */
-    Net(data_set &input, data_set &target, double learning_rate = 0.01, double momentum = 0.1, uint32_t prev_weights = 1);
+    Net(data_set &input, data_set &target, double learning_rate = 0.001, double momentum = 0.1, uint32_t prev_weights = 1);
 
     ~Net();
 };

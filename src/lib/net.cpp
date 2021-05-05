@@ -28,7 +28,6 @@ void Net::__add_layer(uint32_t neurons, double learning_rate, double momentum, u
         this->output.push_back(data_row(layer.neuron_count));
         this->neurons_inputs.push_back(data_row(layer.neuron_count));
     }
-
     this->layers_count += 1;
 }
 
