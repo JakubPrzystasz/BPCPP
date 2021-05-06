@@ -41,10 +41,10 @@ int main()
 
     auto myNet = Net(input, target, layers);
 
-    for(uint32_t i{0}; i<input.size();i++){
-        myNet.feed(i % input.size());
-            std::cout << i << " " << myNet.SSE << std::endl;
+    for(uint32_t i{0}; i < 1000000;i++){
+        myNet.train(i%input.size());
+        std::cout << i << " " << myNet.SSE << std::endl;
     }
-
+    
     return 0;
 }
