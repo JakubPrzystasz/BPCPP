@@ -25,7 +25,7 @@ Net::Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint3
     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, -0.5, 0.5));
 
     //Setup cost vector
-    this->cost = data_row(output_size, 0);
+    this->error = data_row(output_size, 0);
 }
 
 Net::~Net() {}
@@ -37,6 +37,7 @@ void Net::feed(uint32_t data_row_num)
 
     auto &layer = this->layers[0];
     auto &data = this->input[data_row_num];
+    auto &target = this->target[data_row_num];
 
     for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
     {
@@ -58,6 +59,74 @@ void Net::feed(uint32_t data_row_num)
                 neuron.output += (neuron.weights[weight_it] * prev_layer.neurons[weight_it].output);
             neuron.output = neuron.activation(neuron.output, &(neuron.beta_param));
             neuron.derivative_output = neuron.derivative(neuron.output, &(neuron.beta_param));
+        }
+    }
+
+    //Calculate error and SSE
+    this->SSE = 0;
+    auto &last_layer = this->layers.back();
+    for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
+    {
+        this->error[neuron_it] = last_layer.neurons[neuron_it].output - target[neuron_it];
+        SSE += this->error[neuron_it] * this->error[neuron_it];
+    }
+    SSE = 0.5 * SSE;
+}
+
+void Net::train(uint32_t data_row_num)
+{
+    this->feed(data_row_num);
+
+    //Find delta for each neuron
+    //Calculate delta of the last layer
+    auto &last_layer = this->layers.back();
+    for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
+    {
+        auto &neuron = last_layer.neurons[neuron_it];
+        neuron.delta = this->error[neuron_it] * neuron.derivative_output;
+    }
+
+    for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2};; layer_it--)
+    {
+        auto &layer = this->layers[layer_it];
+        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+        {
+            auto &neuron = layer.neurons[neuron_it];
+
+            double sum = 0;
+            for (uint32_t next{0}; next < this->layers[layer_it + 1].neurons.size(); next++)
+            {
+                auto &next_neuron = this->layers[layer_it + 1].neurons[next];
+                sum += next_neuron.weights[neuron_it] * next_neuron.delta;
+            }
+
+            //calculate the delta for current neuron
+            neuron.delta = sum * neuron.derivative_output;
+        }
+
+        //Becaues its unsigned int, we always have value greater than 0, so when we are at 0 lets just break the loop
+        if (!layer_it)
+            break;
+    }
+
+    double delta;
+
+    //Update weights and biases
+    for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+    {
+        auto &layer = this->layers[layer_it];
+        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+        {
+            auto &neuron = layer.neurons[neuron_it];
+
+            delta = -1.0 * neuron.delta * layer.learning_rate;
+
+
+            neuron.bias += delta;
+
+            for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[neuron_it].output;
+
         }
     }
 }

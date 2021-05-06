@@ -40,9 +40,11 @@ int main()
     std::vector<uint32_t> layers {6};
 
     auto myNet = Net(input, target, layers);
-    
-    myNet.feed(0);
 
+    for(uint32_t i{0}; i<input.size();i++){
+        myNet.feed(i % input.size());
+            std::cout << i << " " << myNet.SSE << std::endl;
+    }
 
     return 0;
 }

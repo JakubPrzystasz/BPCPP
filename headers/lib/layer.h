@@ -35,6 +35,4 @@ public:
 
     ~Layer(){};
 
-    void feed(data_row &input);
-
 };
