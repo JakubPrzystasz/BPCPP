@@ -5,90 +5,55 @@ namespace ActivationFunction
 {
     double unipolar(double input, double *params)
     {
-        if(std::isinf(input))
-        {
-            if(input < 0)
-                return 0.0;
-            else
-                return 1.0;
-        }
-
-        if(std::isnan(input))
-            return 0.0;
-
-        return (1.0 / (1.0 + pow(M_E, -((*params) * input))));
+        return __normalize((1.0 / (1.0 + pow(M_E, -((*params) * input)))));
     }
 
-    double unipolar_derivative(double base_output, double *params)
+    double unipolar_derivative(double input, double *params)
     {
-        double ret =  ((*params) * base_output * (1.0 - base_output));
-        if(std::isinf(ret)){
-            if(ret > 0)
-                return std::numeric_limits<double>::max();
-            else
-                return std::numeric_limits<double>::max();
-        }
-
-        return ret;
+        return __normalize((*params) * input * (1.0 - input));
     }
 
     double bipolar(double input, double *params)
     {
-        if(std::isinf(input))
-        {
-            if(input < 0)
-                return -1.0;
-            else
-                return 1.0;
-        }
-
-        double x = sin(*params);
-        x++;
-
-        if(std::isnan(input))
-            return 0.0;
-
-
-        return tanh(input);
+        return __normalize(tanh((*params) * input));
     }
 
-    double bipolar_derivative(double base_output, double *params)
+    double bipolar_derivative(double input, double *params)
     {
-        double ret = ((*params) * (1.0 - pow(base_output, 2.0)));
-        if(std::isinf(ret)){
-            if(ret > 0)
-                return std::numeric_limits<double>::max();
-            else
-                return std::numeric_limits<double>::max();
-        }
-        return ret;
+        return __normalize((*params) * (1.0 - pow(input, 2.0)));
     }
 };
 
-
-Neuron::Neuron(uint32_t weights_count, uint32_t momentum_count, double beta, func_ptr activation, func_ptr activation_derivative)
+Neuron::Neuron(uint32_t inputs, uint32_t ID, Layer* prev_layer)
 {
-    this->beta = beta;
-    this->base = activation;
-    this->derivative = activation_derivative;
-    this->weights_count = weights_count;
-    this->momentum_count = momentum_count;
+    this->ID = ID;
+    this->prev_layer = prev_layer;
 
-    this->weights = std::vector<double>(weights_count * (1 + momentum_count), 0);
+    this->activation = ActivationFunction::unipolar;
+    this->derivative = ActivationFunction::unipolar_derivative;
 
-    std::mt19937_64 rng;
-    // initialize the random number generator with time-dependent seed
-    uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed>>32)};
-    rng.seed(ss);
-    // initialize a uniform distribution between 0 and 1
-    std::uniform_real_distribution<double> unif(-0.5, 0.5);
-    
-    this->bias = unif(rng);
-    
-    for (uint32_t i{0};i<this->weights_count;i++)
-        this->weights[i] = unif(rng);
+    this->weights = data_row(inputs, 0);
+    this->beta_param = 1.0;
 }
 
-
 Neuron::~Neuron() {}
+
+double &Neuron::feed(data_row &input)
+{
+    // This is input layer
+    if (this->weights.size() == 0)
+    {
+        // this->input = input[]
+    }
+    else
+    {
+        this->input = bias;
+        for (uint32_t i{0}; i < weights.size(); i++)
+            this->input += (input[i] * weights[i]);
+    }
+
+    this->output = this->activation(this->input, &(this->beta_param));
+    this->derivative_output = this->derivative(this->output, &(this->beta_param));
+
+    return this->output;
+}

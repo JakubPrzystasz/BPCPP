@@ -1,12 +1,13 @@
 #include "layer.h"
 
-Layer::Layer(uint32_t n, uint32_t p, uint32_t m, double learning_rate, double momentum)
+Layer::Layer(uint32_t neurons, uint32_t inputs, double learning_rate, double momentum_const, uint32_t ID, Layer* prev_layer)
 {
-    this->neuron_count = n;
-    this->momentum_count = m;
-    this->input_count = p;
+    this->prev_layer = prev_layer;
+    this->ID = ID;
+    this->inputs = inputs;
     this->learning_rate = learning_rate;
-    this->momentum = momentum;
-    for (uint32_t i{0}; i < neuron_count; i++)
-        neurons.push_back(Neuron(p, m));
+    this->momentum_const = momentum_const;
+
+    for (uint32_t i{0}; i < neurons; i++)
+        this->neurons.push_back(Neuron(inputs, i, prev_layer));
 };

@@ -13,6 +13,9 @@
 #include "../matplotlib/matplotlib.h"
 namespace plt = matplotlibcpp;
 
+class Layer;
+class Neuron;
+class Net;
 
 typedef std::vector<double> data_row;
 typedef std::vector<data_row> data_set;

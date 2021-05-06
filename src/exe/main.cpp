@@ -37,29 +37,9 @@ int main()
     data_set input, target;
     read_data(input, target);
 
-    auto myNet = Net(input, target);
-    myNet.add_layer(13);
-    myNet.add_layer(6);
-    myNet.add_layer(3);
+    std::vector<uint32_t> layers {6};
 
-    myNet.set_batch_size(1);
-
-    std::vector<uint32_t> input_vec = std::vector<uint32_t>(1);
+    auto myNet = Net(input, target, layers);
         
-    data_row costs(1,0);
-
-
-    for(uint32_t i{0};i<1000000;i++){
-        input_vec[0] = i % input.size();
-        myNet.train(input_vec,costs);
-        myNet.fit();
-        double SSE = 0;
-        for(auto &value: costs)
-            SSE += value;
-        SSE = SSE / input.size();
-
-        std::cout << i << ": " << SSE << std::endl;
-    }
-
     return 0;
 }

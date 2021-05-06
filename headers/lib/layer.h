@@ -4,10 +4,15 @@
 
 class Layer
 {
+    /**
+     * Number of neurons in previous layer
+     */
+    uint32_t inputs;
+
+    Layer* prev_layer;
+
+    uint32_t ID;
 public:
-    uint32_t neuron_count;
-    uint32_t input_count;
-    uint32_t momentum_count;
     /**
      * Learning rate for layer
      */
@@ -16,7 +21,7 @@ public:
     /**
      * Momentum for layer
      */
-    double momentum;
+    double momentum_const;
 
     /**
      * Container for neurons 
@@ -24,26 +29,13 @@ public:
     std::vector<Neuron> neurons;
 
     /**
-     * Feed layer with data
-     * @arg inputs - vector of input values
-     * @arg outputs - vector of outputs values
-     */
-    inline void feed(std::vector<double> &inputs, std::vector<double> &outputs, std::vector<double> &input_values){
-        for (uint32_t i{0}; i < neuron_count; i++)
-            outputs[i] = neurons[i].feed(inputs,input_values[i]);
-    }
-
-    /**
      * Constructor of single layer
     * As an argument it takes number of neurons, and number of neurons in previous layers
-    * @arg n - number of neurons
-    * @arg p - number of inputs
-    * @arg m - number of previous weights to store
+    * @arg neurons - number of neurons
+    * @arg inputs - number of inputs
     */
-    Layer(uint32_t n, uint32_t p, uint32_t m = 1, double learning_rate = 0.1, double momentum = 0.1);
+    Layer(uint32_t neurons, uint32_t inputs, double learning_rate, double momentum_const, uint32_t ID, Layer* prev_layer);
 
-    /**
-     * Destructor of single layer
-     */
+
     ~Layer(){};
 };

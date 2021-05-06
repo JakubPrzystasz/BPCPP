@@ -1,59 +1,31 @@
 #include "net.h"
 
-void Net::add_layer(uint32_t neurons, double learning_rate, double momentum, uint32_t prev_weights)
+Net::Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint32_t batch_size, double learning_rate, double momentum_const)
 {
-    this->__add_layer(neurons, learning_rate, momentum, prev_weights);
-}
+    this->learning_rate = learning_rate;
+    this->momentum_const = momentum_const;
 
-void Net::add_layer(uint32_t neurons)
-{
-    this->__add_layer(neurons, this->learning_rate, this->momentum, this->prev_weights);
-}
+    this->batch_size = batch_size;
 
-void Net::__add_layer(uint32_t neurons, double learning_rate, double momentum, uint32_t prev_weights)
-{
-    if (this->layers.size() < 1)
-        this->layers.push_back(Layer(neurons, 0, 0, learning_rate, momentum));
-    else
-        this->layers.push_back(Layer(neurons, this->layers.back().neuron_count, prev_weights, learning_rate, momentum));
-
-    //Setup helper containers
-    this->cost = data_row(this->layers.back().neuron_count);
-    this->output.erase(this->output.begin(), this->output.end());
-
-    this->neurons_inputs.erase(this->neurons_inputs.begin(), this->neurons_inputs.end());
-
-    for (auto &layer : layers)
-    {
-        this->output.push_back(data_row(layer.neuron_count));
-        this->neurons_inputs.push_back(data_row(layer.neuron_count));
-    }
-    
-    this->layers_count += 1;
-}
-
-Net::Net(data_set &input, data_set &target, double learning_rate, double momentum, uint32_t prev_weights)
-{
     this->input = input;
     this->target = target;
-    this->cost = data_row(target[0].size(), 0);
-    this->layers_count = 0;
-    this->learning_rate = learning_rate;
-    this->momentum = momentum;
-    this->prev_weights = prev_weights;
-}
 
-void Net::set_batch_size(uint32_t size){
-    this->batch_size = size;
-    for(auto &layer: this->layers){
-        for(auto &neuron: layer.neurons){
-            neuron.batch_weights = data_set(size);
-            for(auto &weight: neuron.batch_weights)
-                weight = data_row(neuron.weights_count,0);
-            neuron.batch_bias = data_row(size,0);
-            neuron.batch_size = size;
-        }
-    }
+    this->input_size = input.front().size();
+    this->output_size = target.front().size();
+
+    //Setup layers
+    this->layers = std::vector<Layer>();
+    //input layer
+    this->layers.push_back(Layer(this->input_size, 0, learning_rate, momentum_const, 0, (Layer *)nullptr));
+
+    for (uint32_t i{0}; i < layers.size(); i++)
+        this->layers.push_back(Layer(layers[i], (i > 0 ? layers[i - 1] : input_size), learning_rate, momentum_const, i, (Layer *)&layers.back()));
+
+    //output layer
+    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, layers.size(), (Layer *)&layers.back()));
+
+    //Setup cost vector
+    this->cost = data_row(output_size, 0);
 }
 
 Net::~Net() {}
