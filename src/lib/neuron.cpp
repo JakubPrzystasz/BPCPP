@@ -1,5 +1,13 @@
 #include "neuron.h"
-#include <limits>
+
+double random_value(double min,double max){
+    std::mt19937_64 rng;
+    uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed>>32)}; 
+    rng.seed(ss);
+    std::uniform_real_distribution<double> unif(min, max);
+    return unif(rng);
+}
 
 namespace ActivationFunction
 {
@@ -24,36 +32,20 @@ namespace ActivationFunction
     }
 };
 
-Neuron::Neuron(uint32_t inputs, uint32_t ID, Layer* prev_layer)
+Neuron::Neuron(uint32_t inputs, double rand_min, double rand_max)
 {
-    this->ID = ID;
-    this->prev_layer = prev_layer;
 
     this->activation = ActivationFunction::unipolar;
     this->derivative = ActivationFunction::unipolar_derivative;
 
-    this->weights = data_row(inputs, 0);
+    this->weights = data_row(inputs);
+
+    for (auto &weight : this->weights)
+        weight = random_value(rand_min, rand_max);
+
+    this->bias = random_value(rand_min, rand_max);
+
     this->beta_param = 1.0;
 }
 
 Neuron::~Neuron() {}
-
-double &Neuron::feed(data_row &input)
-{
-    // This is input layer
-    if (this->weights.size() == 0)
-    {
-        // this->input = input[]
-    }
-    else
-    {
-        this->input = bias;
-        for (uint32_t i{0}; i < weights.size(); i++)
-            this->input += (input[i] * weights[i]);
-    }
-
-    this->output = this->activation(this->input, &(this->beta_param));
-    this->derivative_output = this->derivative(this->output, &(this->beta_param));
-
-    return this->output;
-}

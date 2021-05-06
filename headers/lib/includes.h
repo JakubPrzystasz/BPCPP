@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <limits>
 #include <cstring>
 #include <iomanip>
 #include <random>
@@ -21,3 +22,4 @@ typedef std::vector<double> data_row;
 typedef std::vector<data_row> data_set;
 typedef double (*func_ptr)(double, double *);
 
+double random_value(double min,double max);

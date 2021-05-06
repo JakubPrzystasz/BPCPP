@@ -1,7 +1,6 @@
 #pragma once
 
 #include "includes.h"
-#include <cmath>
 
 namespace ActivationFunction
 {	
@@ -42,8 +41,6 @@ namespace ActivationFunction
  */
 class Neuron
 {
-	uint32_t ID;
-	Layer *prev_layer;
 public:
 	
 	/**
@@ -93,14 +90,9 @@ public:
 	double beta_param;
 
 	/**
-     * Get output value of neuron from given input value
-     */
-	double& feed(data_row &input);
-
-	/**
      * @arg inputs - number of neurons in previous layer
      */
-	Neuron(uint32_t inputs, uint32_t ID, Layer* prev_layer);
+	Neuron(uint32_t inputs, double rand_min, double rand_max);
 
 	~Neuron();
 };

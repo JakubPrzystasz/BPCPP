@@ -40,6 +40,9 @@ int main()
     std::vector<uint32_t> layers {6};
 
     auto myNet = Net(input, target, layers);
-        
+    
+    myNet.feed(0);
+
+
     return 0;
 }

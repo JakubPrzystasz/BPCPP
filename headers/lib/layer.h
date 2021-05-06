@@ -4,15 +4,12 @@
 
 class Layer
 {
+public:
     /**
      * Number of neurons in previous layer
      */
     uint32_t inputs;
 
-    Layer* prev_layer;
-
-    uint32_t ID;
-public:
     /**
      * Learning rate for layer
      */
@@ -34,8 +31,10 @@ public:
     * @arg neurons - number of neurons
     * @arg inputs - number of inputs
     */
-    Layer(uint32_t neurons, uint32_t inputs, double learning_rate, double momentum_const, uint32_t ID, Layer* prev_layer);
-
+    Layer(uint32_t neurons, uint32_t inputs, double learning_rate, double momentum_const, double rand_min, double rand_max);
 
     ~Layer(){};
+
+    void feed(data_row &input);
+
 };
