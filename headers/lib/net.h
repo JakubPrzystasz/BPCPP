@@ -97,15 +97,15 @@ public:
                         //calculate the delta for current neuron
                         double x = sum * _neuron->derivative(this->neurons_inputs[layer][neuron], &_neuron->beta);
 
-                        if (std::isnan(x) || std::isinf(x))
-                            exit(-1);
+                        if(std::isnan(x) || std::isinf(x))
+                            exit(10);
 
                         _neuron->delta = x;
                     }
                 }
             }
 
-            for (uint32_t layer{0}; layer < this->layers_count; layer++)
+            for (uint32_t layer{1}; layer < this->layers_count; layer++)
             {
                 for (uint32_t neuron{0}; neuron < this->layers[layer].neuron_count; neuron++)
                 {
@@ -114,9 +114,8 @@ public:
                     //then calculate weights and biases and put them in array
                     _neuron->batch_bias[i] = _neuron->bias - (this->layers[layer].learning_rate * _neuron->delta);
 
-                    if (_neuron->batch_bias[i] > 1000)
-                    {
-                        std::cout << "DUPA";
+                    if (std::isinf(_neuron->batch_bias[i]) || std::isnan(_neuron->batch_bias[i]) ){
+                        exit(10);
                     }
 
                     for (uint32_t weights{0}; weights < _neuron->weights_count; weights++)
@@ -127,6 +126,9 @@ public:
                         else
                             out = this->output[layer - 1][weights];
                         _neuron->batch_weights[i][weights] = _neuron->weights[weights] - (out * this->layers[layer].learning_rate * _neuron->delta);
+                        if (std::isinf(_neuron->batch_weights[i][weights]) || std::isnan(_neuron->batch_weights[i][weights]) ){
+                            exit(10);
+                        }
                     }
                 }
             }
@@ -166,9 +168,10 @@ public:
      *  Feed net with given data
      */
     inline void feed(data_row &input)
-    {
-        this->layers[0].feed(input, this->output[0], this->neurons_inputs[0]);
-
+    {        
+        this->output[0] = input;
+        this->neurons_inputs[0] = input;
+        
         for (uint32_t i{1}; i < layers.size(); i++)
             this->layers[i].feed(this->output[i - 1], this->output[i], this->neurons_inputs[i]);
     }
@@ -178,9 +181,9 @@ public:
      */
     inline void fit()
     {
-        for (auto &layer : this->layers)
+        for (uint32_t layer{1};layer<this->layers_count;layer++)
         {
-            for (auto &neuron : layer.neurons)
+            for (auto &neuron : this->layers[layer].neurons)
                 neuron.fit();
         }
     }
@@ -200,7 +203,7 @@ public:
      *  @arg input - input data set
      *  @arg target - target data set
      */
-    Net(data_set &input, data_set &target, double learning_rate = 0.01, double momentum = 0.1, uint32_t prev_weights = 1);
+    Net(data_set &input, data_set &target, double learning_rate = 0.1, double momentum = 0.1, uint32_t prev_weights = 1);
 
     ~Net();
 };

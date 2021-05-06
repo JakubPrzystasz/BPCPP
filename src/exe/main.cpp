@@ -42,15 +42,15 @@ int main()
     myNet.add_layer(6);
     myNet.add_layer(3);
 
-    myNet.set_batch_size(input.size());
+    myNet.set_batch_size(1);
 
-    std::vector<uint32_t> input_vec = std::vector<uint32_t>(input.size());
-    for(uint32_t i{0};i<input.size();i++)
-        input_vec[i] = i;
+    std::vector<uint32_t> input_vec = std::vector<uint32_t>(1);
         
-    data_row costs(input.size(),0);
+    data_row costs(1,0);
 
-    for(uint32_t i{0};i<100000;i++){
+
+    for(uint32_t i{0};i<1000000;i++){
+        input_vec[0] = i % input.size();
         myNet.train(input_vec,costs);
         myNet.fit();
         double SSE = 0;
@@ -58,10 +58,7 @@ int main()
             SSE += value;
         SSE = SSE / input.size();
 
-        std::cout << i << std::endl;
-        std::cout << SSE << std::endl;
-        if(std::isnan(SSE) || std::isinf(SSE))
-            break;
+        std::cout << i << ": " << SSE << std::endl;
     }
 
     return 0;

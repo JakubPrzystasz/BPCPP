@@ -10,8 +10,8 @@
 #include <random>
 #include <chrono>
 #include <fstream>
-// #include "../matplotlib/matplotlib.h"
-// namespace plt = matplotlibcpp;
+#include "../matplotlib/matplotlib.h"
+namespace plt = matplotlibcpp;
 
 
 typedef std::vector<double> data_row;

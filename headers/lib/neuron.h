@@ -40,31 +40,11 @@ public:
 
 	inline void fit()
 	{
-		this->bias = 0;
-		for (auto &value : this->batch_bias)
-			this->bias += value;
+		this->bias = this->batch_bias[0];
 
-		this->bias = (this->bias / batch_size);
-
-		//move last used weights to next array:
-		for (uint32_t x{1}; x <= this->momentum_count; x++)
-		{
-			for (uint32_t i{0}; i < this->weights_count; i++)
-				this->weights[i + (x * this->weights_count)] = this->weights[i + ((x - 1) * this->weights_count)];
-		}
-
-		for (uint32_t i{0}; i < this->weights_count; i++)
-			this->weights[i] = 0;
-
-		//calculate new weights according to mean of weights in batch
-		for (auto &row : this->batch_weights)
-		{
-			for (uint32_t i{0}; i < weights_count; i++)
-				this->weights[i] += row[i];
-		}
-
-		for (uint32_t i{0}; i < this->weights_count; i++)
-			this->weights[i] = (this->weights[i] / this->batch_size);
+        for(uint32_t i{0}; i < this->weights_count;i++){
+            this->weights[i] = this->batch_weights[0][i];
+        }
 	}
 
 	/**
@@ -111,13 +91,18 @@ public:
 		for (uint32_t i{0}; i < weights_count; i++)
 			input_value += inputs[i] * weights[i];
 
-		return this->base(input_value, &(this->beta));
+		double ret = this->base(input_value, &(this->beta));
+
+		if(std::isnan(ret) || std::isinf(ret))
+		    exit(10);
+
+		return ret;
 	}
 
 	/**
      * Neuron construction, as required arg takes vector of weights
      */
-	Neuron(uint32_t weights_count, uint32_t momentum_count = 1, double bias = 0.0, double beta = 1.0, func_ptr activation = ActivationFunction::unipolar, func_ptr activation_derivative = ActivationFunction::unipolar_derivative);
+	Neuron(uint32_t weights_count, uint32_t momentum_count = 1, double beta = 1.0, func_ptr activation = ActivationFunction::bipolar, func_ptr activation_derivative = ActivationFunction::bipolar_derivative);
 
 	/**
      * Class destructor 
