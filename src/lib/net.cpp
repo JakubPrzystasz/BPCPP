@@ -70,7 +70,6 @@ void Net::feed(uint32_t data_row_num)
         this->error[neuron_it] = last_layer.neurons[neuron_it].output - target[neuron_it];
         SSE += this->error[neuron_it] * this->error[neuron_it];
     }
-    SSE = 0.5 * SSE;
 }
 
 void Net::train(uint32_t data_row_num)
@@ -109,7 +108,7 @@ void Net::train(uint32_t data_row_num)
             break;
     }
 
-    double delta;
+    static double delta;
 
     //Update weights and biases
     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)

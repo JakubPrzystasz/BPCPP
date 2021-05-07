@@ -4,7 +4,7 @@ cmake_policy(VERSION 3.0)
 set(CMAKE_SUPPRESS_REGENERATION true)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
 project("Backprop CPP" VERSION 1.0)
@@ -20,31 +20,12 @@ file(MAKE_DIRECTORY "bin")
 RedirectOutputTo("bin")
 
 # Library target
-add_library(matplotlib_cpp INTERFACE)
+add_library(sciplot INTERFACE)
 
-target_include_directories(matplotlib_cpp
+target_include_directories(sciplot
   INTERFACE
-  ${PROJECT_SOURCE_DIR}/headers/matplotlib
+  ${PROJECT_SOURCE_DIR}/headers/sciplot
 )
-
-target_compile_features(matplotlib_cpp INTERFACE
-  cxx_std_11
-)
-
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-
-target_link_libraries(matplotlib_cpp INTERFACE
-  Python3::Python
-  Python3::Module
-)
-
-find_package(Python3 COMPONENTS NumPy)
-
-target_link_libraries(matplotlib_cpp INTERFACE
-    Python3::NumPy
-)
-
-
 
 set(ENGINE_DIR ${PROJECT_SOURCE_DIR}/src/lib)
 
@@ -60,7 +41,7 @@ foreach(FILE ${SRC_FILES})
 endforeach(FILE)
 
 add_library(Lib STATIC ${ENGINE_SRC})
-target_link_libraries(Lib PRIVATE matplotlib_cpp)
+target_link_libraries(Lib PRIVATE sciplot)
 
 set(EngineHeaders 
   ${PROJECT_SOURCE_DIR}/headers/lib

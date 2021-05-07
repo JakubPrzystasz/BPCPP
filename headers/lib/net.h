@@ -1,7 +1,6 @@
 #pragma once
 
 #include "layer.h"
-#include <cmath>
 
 class Net
 {

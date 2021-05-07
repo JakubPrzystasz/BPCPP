@@ -11,8 +11,6 @@
 #include <random>
 #include <chrono>
 #include <fstream>
-#include "../matplotlib/matplotlib.h"
-namespace plt = matplotlibcpp;
 
 class Layer;
 class Neuron;
