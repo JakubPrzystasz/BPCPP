@@ -53,7 +53,7 @@ int main()
 
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-    shuffle (index.begin(), index.end(), std::default_random_engine(seed));
+    //shuffle (index.begin(), index.end(), std::default_random_engine(seed));
 
     uint32_t it{0};
 
@@ -61,13 +61,18 @@ int main()
 
     while (true)
     {
+        myNet.SSE = 0;
         for (uint32_t i{0}; i < input.size(); i++)
             myNet.train(index[i]);
-        std::cout << it << std::endl;
 
+        myNet.SSE = myNet.SSE / static_cast<double>(input.size());
+        if(it % 10000 == 0){
+            std::cout << it << "  SSE: " << myNet.SSE << std::endl;        
+        }
+       
         if(myNet.SSE < 0.05)
             break;
-        if (it == 10000)
+        if (it == 1000000)
             break;
         it++;
     }

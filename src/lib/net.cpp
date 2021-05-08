@@ -29,7 +29,7 @@ Net::Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint3
     // }
 
     //Setup cost vector
-    this->error = data_row(output_size, 0);
+    //this->error = data_row(output_size, 0);
 }
 
 Net::~Net() {}
@@ -40,7 +40,6 @@ void Net::feed(uint32_t data_row_num)
     //First set input layer
     auto &layer = this->layers[0];
     auto &data = this->input[data_row_num];
-    auto &target = this->target[data_row_num];
 
     for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
     {
@@ -64,16 +63,6 @@ void Net::feed(uint32_t data_row_num)
             neuron.derivative_output = neuron.derivative(neuron.output, &(neuron.beta_param));
         }
     }
-
-    //Calculate error and SSE
-    this->SSE = 0;
-    auto &last_layer = this->layers.back();
-    for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
-    {
-        this->error[neuron_it] = target[neuron_it] - last_layer.neurons[neuron_it].output;
-        SSE += (this->error[neuron_it] * this->error[neuron_it]);
-    }
-    this->SSE = (this->SSE / last_layer.neurons.size());
 }
 
 void Net::train(uint32_t data_row_num)
@@ -126,4 +115,15 @@ void Net::train(uint32_t data_row_num)
                 neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
         }
     }
+
+    this->feed(data_row_num);
+
+    //Calculate error and SSE
+    auto &target = this->target[data_row_num];
+    double error = 0;
+
+    for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
+        error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);
+
+    this->SSE += (error / last_layer.neurons.size());
 }

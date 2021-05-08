@@ -60,10 +60,11 @@ Neuron::Neuron(uint32_t inputs, double rand_min, double rand_max)
     this->weights = data_row(inputs);
 
     for (auto &weight : this->weights)
-        weight = random_value(rand_min, rand_max);
+        weight = 0.5;
+        //weight = random_value(rand_min, rand_max);
 
-    //this->bias = 0.5;
-    this->bias = random_value(rand_min, rand_max);
+    this->bias = 0.5;
+    //this->bias = random_value(rand_min, rand_max);
 
     this->beta_param = 1.0;
 }

@@ -6,11 +6,6 @@ class Net
 {
 public:
     /**
-     * error vector
-     */
-    data_row error;
-
-    /**
      * Size of batch
      */
     uint32_t batch_size;
