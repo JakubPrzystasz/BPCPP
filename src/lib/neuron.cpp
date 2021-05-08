@@ -1,9 +1,10 @@
 #include "neuron.h"
 
-double random_value(double min,double max){
+double random_value(double min, double max)
+{
     std::mt19937_64 rng;
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-    std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed>>32)}; 
+    std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
     rng.seed(ss);
     std::uniform_real_distribution<double> unif(min, max);
     return unif(rng);
@@ -23,14 +24,10 @@ namespace ActivationFunction
 
     double bipolar(double input, double *params)
     {
-        if(input > 2.0)
-            input = 2.0;
-        if(input < -2.0)
-            input = -2.0;
         double ret = __normalize(tanh((*params) * input));
-        if(ret <-1.0)
+        if (ret < -1.0)
             return -1.0;
-        if(ret > 1.0)
+        if (ret > 1.0)
             return 1.0;
         return ret;
     }
@@ -39,32 +36,34 @@ namespace ActivationFunction
     {
         return __normalize((*params) * (1.0 - pow(input, 2.0)));
     }
-    double purelin(double input, double *params){
-        if(input > 1.0)
+
+    double purelin(double input, double *params)
+    {
+        if (input > 1.0)
             return 1.0;
-        if(input < -1.0)
+        if (input < -1.0)
             return -1.0;
         return input;
     }
-	double purelin_derivative(double input, double *params){
+
+    double purelin_derivative(double input, double *params)
+    {
         return 1.0;
     }
 };
 
-Neuron::Neuron(uint32_t inputs, double rand_min, double rand_max)
+Neuron::Neuron(uint32_t inputs, double rand_min, double rand_max, func_ptr activation, func_ptr derivative)
 {
 
-    this->activation = ActivationFunction::bipolar;
-    this->derivative = ActivationFunction::bipolar_derivative;
+    this->activation = activation;
+    this->derivative = derivative;
 
     this->weights = data_row(inputs);
 
     for (auto &weight : this->weights)
-        weight = 0.5;
-        //weight = random_value(rand_min, rand_max);
+        weight = random_value(rand_min, rand_max);
 
-    this->bias = 0.5;
-    //this->bias = random_value(rand_min, rand_max);
+    this->bias = random_value(rand_min, rand_max);
 
     this->beta_param = 1.0;
 }

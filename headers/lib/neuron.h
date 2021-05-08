@@ -35,7 +35,14 @@ namespace ActivationFunction
 	 */
 	double bipolar_derivative(double input, double *params);
 
+	/**
+	 * Linear neuron activation 
+	 */
 	double purelin(double input, double *params);
+
+	/**
+	 * Linear neuron activation derivative
+	 */
 	double purelin_derivative(double input, double *params);
 };
 
@@ -95,7 +102,7 @@ public:
 	/**
      * @arg inputs - number of neurons in previous layer
      */
-	Neuron(uint32_t inputs, double rand_min, double rand_max);
+	Neuron(uint32_t inputs, double rand_min = -1.0, double rand_max = 1.0, func_ptr activation = ActivationFunction::bipolar, func_ptr derivative = ActivationFunction::bipolar_derivative);
 
 	~Neuron();
 };

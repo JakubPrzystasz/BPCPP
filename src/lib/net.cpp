@@ -16,20 +16,13 @@ Net::Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint3
     //Setup layers
     this->layers = std::vector<Layer>();
     //input layer
-    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_const, -1.0, 1.0));
+    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_const));
 
     for (uint32_t i{0}; i < layers.size(); i++)
-        this->layers.push_back(Layer(layers[i], (i > 0 ? layers[i - 1] : input_size), learning_rate, momentum_const, -1.0, 1.0));
+        this->layers.push_back(Layer(layers[i], (i > 0 ? layers[i - 1] : input_size), learning_rate, momentum_const));
 
     //output layer
     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, -0.5, 0.5));
-    // for(auto &neuron: this->layers.back().neurons){
-    //     neuron.activation = ActivationFunction::purelin;
-    //     neuron.derivative = ActivationFunction::purelin_derivative;
-    // }
-
-    //Setup cost vector
-    //this->error = data_row(output_size, 0);
 }
 
 Net::~Net() {}
@@ -120,7 +113,7 @@ void Net::train(uint32_t data_row_num)
 
     //Calculate error and SSE
     auto &target = this->target[data_row_num];
-    double error = 0;
+    static double error = 0;
 
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
         error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);

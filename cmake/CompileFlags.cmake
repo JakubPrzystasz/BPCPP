@@ -9,7 +9,7 @@ else()
 	#g++ compile flags
 	set(CMAKE_CXX_FLAGS "-Wall -msse2 -fno-rtti -pipe")
 	set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -fno-rtti -pipe")
-	set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2 -msse2 -fno-rtti -pipe")
+	set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O3 -msse2 -fno-rtti -pipe")
 
 	# set(CMAKE_CXX_FLAGS "-Wall -msse2 -fno-rtti -pipe")
 	# set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -fno-rtti -pipe -Wextra -Werror")

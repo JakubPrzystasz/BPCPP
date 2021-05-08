@@ -51,6 +51,11 @@ public:
     double SSE;
 
     /**
+     * MSE
+     */
+    double MSE;
+
+    /**
      * Train network
      */
     void train(uint32_t data_row_num);
@@ -67,3 +72,16 @@ public:
 
     void feed(uint32_t data_row_num);
 };
+
+/*
+TODO:
+    Input data preparation - make internal vector of indexes of input data set
+    every call of function traingdx suffle 3 sets of input data:
+    train set, validate set, and test set. in default proportion 80,15,5
+    but every set must have each class
+
+    Make batch learning.
+
+    Add adaptive learning rate, and momentum with variable momentum delta
+
+*/

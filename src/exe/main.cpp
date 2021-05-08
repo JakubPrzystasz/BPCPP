@@ -59,23 +59,27 @@ int main()
 
     auto &out = myNet.layers.back().neurons;
 
+    auto begin = std::chrono::high_resolution_clock::now();
     while (true)
     {
         myNet.SSE = 0;
         for (uint32_t i{0}; i < input.size(); i++)
             myNet.train(index[i]);
 
-        myNet.SSE = myNet.SSE / static_cast<double>(input.size());
-        if(it % 10000 == 0){
-            std::cout << it << "  SSE: " << myNet.SSE << std::endl;        
-        }
+        //myNet.SSE = myNet.SSE / static_cast<double>(input.size());
+        // if(it % 10000 == 0){
+        //     std::cout << it << "  SSE: " << myNet.SSE << std::endl;        
+        // }
        
-        if(myNet.SSE < 0.05)
-            break;
-        if (it == 1000000)
+        if (it == 1000)
             break;
         it++;
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() << "ms" << std::endl;
+
+
+    return 0;
 
     for (uint32_t i{0}; i < input.size(); i++)
     {
