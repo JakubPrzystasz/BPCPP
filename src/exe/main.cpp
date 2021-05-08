@@ -23,9 +23,9 @@ void read_data(data_set &input, data_set &target)
     for (std::string line; getline(input_file, line);)
     {
         data_row input_data = std::vector<double>(13, 0);
-        data_row output_data = std::vector<double>(3, 0);
-        sscanf(line.c_str(), "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-               &output_data[0], &output_data[1], &output_data[2], &input_data[0], &input_data[1], &input_data[2], &input_data[3], &input_data[4],
+        data_row output_data = std::vector<double>(1, 0);
+        sscanf(line.c_str(), "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+               &output_data[0], &input_data[0], &input_data[1], &input_data[2], &input_data[3], &input_data[4],
                &input_data[5], &input_data[6], &input_data[7], &input_data[8], &input_data[9], &input_data[10],
                &input_data[11], &input_data[12]);
         input.push_back(input_data);
@@ -33,27 +33,13 @@ void read_data(data_set &input, data_set &target)
     }
 }
 
-double select(double a, double b, double c)
-{
-    double max = a;
-    if (b >= max)
-        max = b;
-    if (c >= max)
-        max = c;
-    if (max == a)
-        return 1.0;
-    if (max == b)
-        return 2.0;
-    if (max == c)
-        return 3.0;
-}
 
 int main()
 {
     data_set input, target;
     read_data(input, target);
 
-    std::vector<uint32_t> layers{17, 2};
+    std::vector<uint32_t> layers{3};
 
     auto myNet = Net(input, target, layers);
 
@@ -61,11 +47,13 @@ int main()
     output_plot = data_row(input.size());
     target_plot = data_row(input.size());
 
-    for (uint32_t i{0}; i < input.size(); i++)
-    {
-        x.push_back(i);
-        target_plot[i] = select(target[i][0], target[i][1], target[i][2]);
-    }
+    std::vector<uint32_t> index(input.size(),0);
+    for(uint32_t i{0};i<input.size();i++)
+        index[i] = i;
+
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+    shuffle (index.begin(), index.end(), std::default_random_engine(seed));
 
     uint32_t it{0};
 
@@ -74,25 +62,31 @@ int main()
     while (true)
     {
         for (uint32_t i{0}; i < input.size(); i++)
-            myNet.train(i);
+            myNet.train(index[i]);
         std::cout << it << std::endl;
-        if (it == 1000000)
+
+        if(myNet.SSE < 0.05)
+            break;
+        if (it == 10000)
             break;
         it++;
     }
+
     for (uint32_t i{0}; i < input.size(); i++)
     {
         myNet.train(i);
-        output_plot[i] = select(out[0].output, out[1].output, out[2].output);
+        output_plot[i] = out[0].output;
     }
 
 
     sciplot::Plot plot0;
-    plot0.drawCurve(x, output_plot);
-    plot0.drawDots(x, target_plot);
+    for (uint32_t i{0}; i < input.size(); i++)
+        x.push_back(i);
+
+    plot0.drawDots(x, output_plot);
+
     plot0.legend().hide();
-    // Save the figure to a PDF file
-    plot0.save("test.png");
+    plot0.save("test1.png");
 
     return 0;
 }

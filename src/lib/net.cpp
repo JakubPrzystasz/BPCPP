@@ -23,6 +23,10 @@ Net::Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint3
 
     //output layer
     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, -0.5, 0.5));
+    // for(auto &neuron: this->layers.back().neurons){
+    //     neuron.activation = ActivationFunction::purelin;
+    //     neuron.derivative = ActivationFunction::purelin_derivative;
+    // }
 
     //Setup cost vector
     this->error = data_row(output_size, 0);
@@ -34,7 +38,6 @@ void Net::feed(uint32_t data_row_num)
 {
 
     //First set input layer
-
     auto &layer = this->layers[0];
     auto &data = this->input[data_row_num];
     auto &target = this->target[data_row_num];
@@ -67,9 +70,10 @@ void Net::feed(uint32_t data_row_num)
     auto &last_layer = this->layers.back();
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
     {
-        this->error[neuron_it] = last_layer.neurons[neuron_it].output - target[neuron_it];
-        SSE += this->error[neuron_it] * this->error[neuron_it];
+        this->error[neuron_it] = target[neuron_it] - last_layer.neurons[neuron_it].output;
+        SSE += (this->error[neuron_it] * this->error[neuron_it]);
     }
+    this->SSE = (this->SSE / last_layer.neurons.size());
 }
 
 void Net::train(uint32_t data_row_num)
@@ -82,10 +86,10 @@ void Net::train(uint32_t data_row_num)
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
     {
         auto &neuron = last_layer.neurons[neuron_it];
-        neuron.delta = this->error[neuron_it] * neuron.derivative_output;
+        neuron.delta = (neuron.output - target[data_row_num][neuron_it]) * neuron.derivative_output;
     }
 
-    for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2};; layer_it--)
+    for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
     {
         auto &layer = this->layers[layer_it];
         for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
@@ -102,10 +106,6 @@ void Net::train(uint32_t data_row_num)
             //calculate the delta for current neuron
             neuron.delta = sum * neuron.derivative_output;
         }
-
-        //Becaues its unsigned int, we always have value greater than 0, so when we are at 0 lets just break the loop
-        if (!layer_it)
-            break;
     }
 
     static double delta;
@@ -120,12 +120,10 @@ void Net::train(uint32_t data_row_num)
 
             delta = -1.0 * neuron.delta * layer.learning_rate;
 
-
             neuron.bias += delta;
 
             for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
-                neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[neuron_it].output;
-
+                neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
         }
     }
 }

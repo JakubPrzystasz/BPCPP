@@ -66,7 +66,7 @@ public:
      *  @arg target - target data set
      *  @arg layers - hidden layers vector
      */
-    Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint32_t batch_size = 1, double learning_rate = 0.1, double momentum_const = 0.1);
+    Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint32_t batch_size = 1, double learning_rate = 0.001, double momentum_const = 0.1);
 
     ~Net();
 

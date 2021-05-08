@@ -34,6 +34,9 @@ namespace ActivationFunction
 	 * Bipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
 	 */
 	double bipolar_derivative(double input, double *params);
+
+	double purelin(double input, double *params);
+	double purelin_derivative(double input, double *params);
 };
 
 /**

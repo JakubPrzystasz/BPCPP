@@ -23,26 +23,46 @@ namespace ActivationFunction
 
     double bipolar(double input, double *params)
     {
-        return __normalize(tanh((*params) * input));
+        if(input > 2.0)
+            input = 2.0;
+        if(input < -2.0)
+            input = -2.0;
+        double ret = __normalize(tanh((*params) * input));
+        if(ret <-1.0)
+            return -1.0;
+        if(ret > 1.0)
+            return 1.0;
+        return ret;
     }
 
     double bipolar_derivative(double input, double *params)
     {
         return __normalize((*params) * (1.0 - pow(input, 2.0)));
     }
+    double purelin(double input, double *params){
+        if(input > 1.0)
+            return 1.0;
+        if(input < -1.0)
+            return -1.0;
+        return input;
+    }
+	double purelin_derivative(double input, double *params){
+        return 1.0;
+    }
 };
 
 Neuron::Neuron(uint32_t inputs, double rand_min, double rand_max)
 {
 
-    this->activation = ActivationFunction::unipolar;
-    this->derivative = ActivationFunction::unipolar_derivative;
+    this->activation = ActivationFunction::bipolar;
+    this->derivative = ActivationFunction::bipolar_derivative;
 
     this->weights = data_row(inputs);
 
     for (auto &weight : this->weights)
         weight = random_value(rand_min, rand_max);
 
+    //this->bias = 0.5;
     this->bias = random_value(rand_min, rand_max);
 
     this->beta_param = 1.0;
