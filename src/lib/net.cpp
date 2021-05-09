@@ -107,6 +107,9 @@ Net::Net(pattern_set &input_data)
 void Net::setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size)
 {
     this->batch_size = batch_size;
+    //If 0 set to size of whole input set -- full batch
+    if (batch_size == 0)
+        this->batch_size = this->input_data.size();
 
     //Setup layers
     this->layers = std::vector<Layer>();
@@ -126,12 +129,12 @@ void Net::setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size)
 
 Net::~Net() {}
 
-void Net::feed(uint32_t data_row_num)
+void Net::feed(uint32_t sample_number)
 {
 
     //First set input layer
     auto &layer = this->layers.front();
-    auto &data = this->input_data[data_row_num].input;
+    auto &data = this->input_data[sample_number].input;
 
     for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
     {
@@ -157,17 +160,18 @@ void Net::feed(uint32_t data_row_num)
     }
 }
 
-void Net::train(uint32_t data_row_num)
+void Net::train(uint32_t sample_number)
 {
-    this->feed(data_row_num);
+    this->feed(sample_number);
 
-    //Find delta for each neuron
-    //Calculate delta of the last layer
+    //Find delta for each neuron in each layer starting from output layer
+
+    //Calculate delta of the output layer
     auto &last_layer = this->layers.back();
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
     {
         auto &neuron = last_layer.neurons[neuron_it];
-        neuron.delta = (neuron.output - this->input_data[data_row_num].output[neuron_it]) * neuron.derivative_output;
+        neuron.delta = (neuron.output - this->input_data[sample_number].output[neuron_it]) * neuron.derivative_output;
     }
 
     for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
@@ -189,7 +193,7 @@ void Net::train(uint32_t data_row_num)
         }
     }
 
-    static double delta;
+    static double delta, batch_tmp;
 
     //Update weights and biases
     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
@@ -201,15 +205,36 @@ void Net::train(uint32_t data_row_num)
 
             delta = -1.0 * neuron.delta * layer.learning_rate;
 
-            neuron.bias += delta;
-
-            for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
-                neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
+            //Use faster stochastic method
+            if (batch_size == 1)
+            {
+                neuron.bias += delta;
+                for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                    neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
+            }
+            else
+            {
+                //Update deltas
+                neuron.batch.bias_deltas += delta;
+                for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                    neuron.batch.weights_deltas[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
+                //Update weights and biases
+                if ((batch_it % batch_size) == 0)
+                {
+                    neuron.bias += (neuron.batch.bias_deltas / static_cast<double>(neuron.batch_size));
+                    for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                    {
+                        neuron.weights[weights_it] += (neuron.batch.weights_deltas[weights_it] / static_cast<double>(neuron.batch_size));
+                        neuron.batch.weights_deltas[weights_it] = 0;
+                    }
+                    neuron.batch.bias_deltas = 0;
+                }
+            }
         }
     }
 
     //Calculate error and SSE
-    auto &target = this->input_data[data_row_num].output;
+    auto &target = this->input_data[sample_number].output;
     static double error = 0;
 
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)

@@ -19,6 +19,11 @@ class Net
      */
     pattern_set input_data;
 
+    /**
+     * Iterator over values in single batch
+     */
+    uint32_t batch_it;
+
 public:
 
     /**
@@ -92,7 +97,7 @@ public:
     /**
      * Setup internal vectors according to class properties
      */
-    void setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size = 0);
+    void setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size = 1);
 
     ~Net();
 };

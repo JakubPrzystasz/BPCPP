@@ -67,7 +67,7 @@ Neuron::Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size, func_ptr
 
     //Batch size is greater than zero so, initialize batch vector
     if(batch_size)
-        this->batch = Batch(batch_size, inputs);
+        this->batch = Batch(inputs);
     
     this->batch_size = batch_size;
 

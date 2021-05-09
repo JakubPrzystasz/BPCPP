@@ -58,18 +58,13 @@ public:
 	 */
 	struct Batch
 	{
-		data_row bias_updates;
-		data_set weights_updates;
-		Batch(uint32_t batch_size, uint32_t weights_count)
-		{
-			bias_updates = data_row(batch_size);
-			weights_updates = data_set(batch_size);
-			for (uint32_t i{0}; i < weights_count; i++)
-				weights_updates[i] = data_row(weights_count);
+		double bias_deltas;
+		data_row weights_deltas;
+		Batch(uint32_t weights_count){
+			weights_deltas= data_row(weights_count);
+			bias_deltas = 0;
 		}
-		Batch()
-		{
-		}
+		Batch(){}
 	};
 
 	/**
@@ -130,7 +125,7 @@ public:
 	/**
      * @arg inputs - number of neurons in previous layer
 	 * @arg range - pair of double values, first min, second max - defines range for random weights and biases
-	 * @arg batch_size - size of batch - if 0 uses stochastic method
+	 * @arg batch_size 
      */
 	Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size = 0, func_ptr activation = ActivationFunction::bipolar, func_ptr derivative = ActivationFunction::bipolar_derivative);
 
