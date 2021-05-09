@@ -1,122 +1,211 @@
 #include "net.h"
 
-Net::Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint32_t batch_size, double learning_rate, double momentum_const)
+void Net::read_file(std::string filename, pattern_set &input_data)
 {
-    this->learning_rate = learning_rate;
-    this->momentum_const = momentum_const;
+    /**
+Output:    
+    0) Class
+Input:
+    1) Alcohol
+ 	2) Malic acid
+ 	3) Ash
+	4) Alcalinity of ash  
+ 	5) Magnesium
+	6) Total phenols
+ 	7) Flavanoids
+ 	8) Nonflavanoid phenols
+ 	9) Proanthocyanins
+	10)Color intensity
+ 	11)Hue
+ 	12)OD280/OD315 of diluted wines
+ 	13)Proline
+     */
+    std::ifstream input_file(filename);
 
-    this->batch_size = batch_size;
+    if (!input_file)
+    {
+        std::cout << "Unable to open input data file" << std::endl;
+        exit(-1);
+    }
 
-    this->input = input;
-    this->target = target;
+    /**
+     * input_size - size of input layer
+     * output_size - size of output layer
+     * output_position - 0 means that output data is stored before input data at single text row
+     */
+    uint32_t input_size, output_size, output_position;
 
-    this->input_size = input.front().size();
-    this->output_size = target.front().size();
+    {
+        //Read first line, that stores size of input and output
+        std::string line;
+        std::getline(input_file, line);
+        std::stringstream steam = std::stringstream(line);
+        steam >> input_size >> output_size >> output_position;
+    }
 
-    //Setup layers
-    this->layers = std::vector<Layer>();
-    //input layer
-    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_const));
+    double tmp_value;
 
-    for (uint32_t i{0}; i < layers.size(); i++)
-        this->layers.push_back(Layer(layers[i], (i > 0 ? layers[i - 1] : input_size), learning_rate, momentum_const));
+    for (std::string line; std::getline(input_file, line);)
+    {
+        std::stringstream stream = std::stringstream(line);
+        //Workaround of invalid reading first value;
+        stream >> tmp_value;
 
-    //output layer
-    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, -0.5, 0.5));
+        Pattern sample = Pattern();
+
+        //Output vector is before input so, read it first
+        if (!output_position)
+        {
+            for (uint32_t i{0}; i < output_size; i++, stream >> tmp_value)
+                sample.output.push_back(tmp_value);
+
+            for (uint32_t i{0}; i < input_size; i++, stream >> tmp_value)
+                sample.input.push_back(tmp_value);
+        }
+        else
+        {
+            for (uint32_t i{0}; i < input_size; i++, stream >> tmp_value)
+                sample.input.push_back(tmp_value);
+
+            for (uint32_t i{0}; i < output_size; i++, stream >> tmp_value)
+                sample.output.push_back(tmp_value);
+        }
+
+        //append sample to data set
+        input_data.push_back(sample);
+    }
 }
 
-Net::~Net() {}
+// Net::Net(pattern_set &input_data)
+// {
+//     /*
+//         Validate input data
+//     */
+//     if (input_data.size() == 0)
+//         throw std::invalid_argument("Input data set is empty");
 
-void Net::feed(uint32_t data_row_num)
-{
+//     this->input_size = input_data.front().input.size();
+//     this->output_size = input_data.front().output.size();
 
-    //First set input layer
-    auto &layer = this->layers[0];
-    auto &data = this->input[data_row_num];
+//     uint32_t it{0};
+//     for (auto &set : input_data)
+//     {
+//         if (set.input.size() != this->input_size)
+//             throw std::invalid_argument(std::string("Invalid input pattern size at: ") + std::to_string(it));
 
-    for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
-    {
-        auto &neuron = layer.neurons[neuron_it];
+//         if (set.output.size() != this->output_size)
+//             throw std::invalid_argument(std::string("Invalid output pattern size at: ") + std::to_string(it));
 
-        neuron.input = neuron.output = neuron.derivative_output = data[neuron_it];
-    }
+//         it++;
+//     }
 
-    //Set hidden layers and output layer
-    for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-    {
-        auto &layer = this->layers[layer_it];
-        auto &prev_layer = this->layers[layer_it - 1];
+//     this->input_data = input_data;
+// }
 
-        for (auto &neuron : layer.neurons)
-        {
-            neuron.output = neuron.bias;
-            for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
-                neuron.output += (neuron.weights[weight_it] * prev_layer.neurons[weight_it].output);
-            neuron.output = neuron.activation(neuron.output, &(neuron.beta_param));
-            neuron.derivative_output = neuron.derivative(neuron.output, &(neuron.beta_param));
-        }
-    }
-}
+// void Net::setup(std::vector<uint32_t> &hidden_layers);
+// {
+//     //Setup layers
+//     this->layers = std::vector<Layer>();
+//     //input layer
+//     this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_const));
 
-void Net::train(uint32_t data_row_num)
-{
-    this->feed(data_row_num);
+//     for (uint32_t i{0}; i < layers.size(); i++)
+//         this->layers.push_back(Layer(layers[i], (i > 0 ? layers[i - 1] : input_size), learning_rate, momentum_const));
 
-    //Find delta for each neuron
-    //Calculate delta of the last layer
-    auto &last_layer = this->layers.back();
-    for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
-    {
-        auto &neuron = last_layer.neurons[neuron_it];
-        neuron.delta = (neuron.output - target[data_row_num][neuron_it]) * neuron.derivative_output;
-    }
+//     //output layer
+//     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, -0.5, 0.5));
+// }
 
-    for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
-    {
-        auto &layer = this->layers[layer_it];
-        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
-        {
-            auto &neuron = layer.neurons[neuron_it];
+// Net::~Net() {}
 
-            double sum = 0;
-            for (uint32_t next{0}; next < this->layers[layer_it + 1].neurons.size(); next++)
-            {
-                auto &next_neuron = this->layers[layer_it + 1].neurons[next];
-                sum += next_neuron.weights[neuron_it] * next_neuron.delta;
-            }
+// void Net::feed(uint32_t data_row_num)
+// {
 
-            //calculate the delta for current neuron
-            neuron.delta = sum * neuron.derivative_output;
-        }
-    }
+//     //First set input layer
+//     auto &layer = this->layers[0];
+//     auto &data = this->input[data_row_num];
 
-    static double delta;
+//     for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+//     {
+//         auto &neuron = layer.neurons[neuron_it];
 
-    //Update weights and biases
-    for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-    {
-        auto &layer = this->layers[layer_it];
-        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
-        {
-            auto &neuron = layer.neurons[neuron_it];
+//         neuron.input = neuron.output = neuron.derivative_output = data[neuron_it];
+//     }
 
-            delta = -1.0 * neuron.delta * layer.learning_rate;
+//     //Set hidden layers and output layer
+//     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+//     {
+//         auto &layer = this->layers[layer_it];
+//         auto &prev_layer = this->layers[layer_it - 1];
 
-            neuron.bias += delta;
+//         for (auto &neuron : layer.neurons)
+//         {
+//             neuron.output = neuron.bias;
+//             for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
+//                 neuron.output += (neuron.weights[weight_it] * prev_layer.neurons[weight_it].output);
+//             neuron.output = neuron.activation(neuron.output, &(neuron.beta_param));
+//             neuron.derivative_output = neuron.derivative(neuron.output, &(neuron.beta_param));
+//         }
+//     }
+// }
 
-            for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
-                neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
-        }
-    }
+// void Net::train(uint32_t data_row_num)
+// {
+//     this->feed(data_row_num);
 
-    this->feed(data_row_num);
+//     //Find delta for each neuron
+//     //Calculate delta of the last layer
+//     auto &last_layer = this->layers.back();
+//     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
+//     {
+//         auto &neuron = last_layer.neurons[neuron_it];
+//         neuron.delta = (neuron.output - target[data_row_num][neuron_it]) * neuron.derivative_output;
+//     }
 
-    //Calculate error and SSE
-    auto &target = this->target[data_row_num];
-    static double error = 0;
+//     for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
+//     {
+//         auto &layer = this->layers[layer_it];
+//         for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+//         {
+//             auto &neuron = layer.neurons[neuron_it];
 
-    for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
-        error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);
+//             double sum = 0;
+//             for (uint32_t next{0}; next < this->layers[layer_it + 1].neurons.size(); next++)
+//             {
+//                 auto &next_neuron = this->layers[layer_it + 1].neurons[next];
+//                 sum += next_neuron.weights[neuron_it] * next_neuron.delta;
+//             }
 
-    this->SSE += (error / last_layer.neurons.size());
-}
+//             //calculate the delta for current neuron
+//             neuron.delta = sum * neuron.derivative_output;
+//         }
+//     }
+
+//     static double delta;
+
+//     //Update weights and biases
+//     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+//     {
+//         auto &layer = this->layers[layer_it];
+//         for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+//         {
+//             auto &neuron = layer.neurons[neuron_it];
+
+//             delta = -1.0 * neuron.delta * layer.learning_rate;
+
+//             neuron.bias += delta;
+
+//             for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+//                 neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
+//         }
+//     }
+
+//     //Calculate error and SSE
+//     auto &target = this->target[data_row_num];
+//     static double error = 0;
+
+//     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
+//         error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);
+
+//     this->SSE += (error / last_layer.neurons.size());
+// }

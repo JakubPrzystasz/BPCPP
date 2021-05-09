@@ -4,12 +4,6 @@
 
 class Net
 {
-public:
-    /**
-     * Size of batch
-     */
-    uint32_t batch_size;
-
     /**
      * Size of input layer
      */
@@ -20,30 +14,38 @@ public:
      */
     uint32_t output_size;
 
-    /**
-     * Input data set
-     */
-    data_set input;
-
-    /**
-     * Target data set
-     */
-    data_set target;
+    pattern_set input_data;
 
     /**
      * Vector of layers
      */
     std::vector<Layer> layers;
 
+public:
+
     /**
-     * Learning rate
+     * Read data form text file
+     * put all data to input_data vector
      */
+    static void read_file(std::string filename, pattern_set &input_data);
+
+    /**
+         * Size of batch - it can be value in range 1 - number of samples
+         * if 0 - full batch (adjusted to number of samples for train set, validation set, and test set)
+         * if 1 - stochastic learning
+         * if greater - mini batch, but can not exceed number of samples in set
+         */
+    uint32_t batch_size;
+
+    /**
+         * Learning rate must be less than 1  
+        */
     double learning_rate;
 
     /**
-     * Momentum constans
-     */
-    double momentum_const;
+         * Momentum constans
+         */
+    double momentum_constans;
 
     /**
      * SSE 
@@ -56,9 +58,17 @@ public:
     double MSE;
 
     /**
-     * Train network
+     * Feed network with sample
+     * just gets output value of each neuron
      */
-    void train(uint32_t data_row_num);
+    void feed(uint32_t sample_number);
+
+    /**
+     * Train network
+     * computes SSE, MSE, outputs
+     * It just does one Epoch of training set
+     */
+    void train(uint32_t sample_number);
 
     /**
      *  Constructor of neural network
@@ -66,11 +76,11 @@ public:
      *  @arg target - target data set
      *  @arg layers - hidden layers vector
      */
-    Net(data_set &input, data_set &target, std::vector<uint32_t> &layers, uint32_t batch_size = 1, double learning_rate = 0.001, double momentum_const = 0.1);
+    Net(pattern_set &input_data);
+
+    void setup(std::vector<uint32_t> &hidden_layers);
 
     ~Net();
-
-    void feed(uint32_t data_row_num);
 };
 
 /*
