@@ -1,12 +1,12 @@
 #include "neuron.h"
 
-double random_value(rand_range range)
+double random_value(rand_range &range)
 {
     std::mt19937_64 rng;
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
     rng.seed(ss);
-    std::uniform_real_distribution<double> unif(range.get(0), range.get(1));
+    std::uniform_real_distribution<double> unif(std::get<0>(range), std::get<0>(range));
     return unif(rng);
 }
 
@@ -52,7 +52,7 @@ namespace ActivationFunction
     }
 };
 
-Neuron::Neuron(uint32_t inputs, double rand_min, double rand_max, func_ptr activation, func_ptr derivative)
+Neuron::Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size, func_ptr activation, func_ptr derivative)
 {
 
     this->activation = activation;
@@ -61,9 +61,15 @@ Neuron::Neuron(uint32_t inputs, double rand_min, double rand_max, func_ptr activ
     this->weights = data_row(inputs);
 
     for (auto &weight : this->weights)
-        weight = random_value(rand_min, rand_max);
+        weight = random_value(range);
 
-    this->bias = random_value(rand_min, rand_max);
+    this->bias = random_value(range);
+
+    //Batch size is greater than zero so, initialize batch vector
+    if(batch_size)
+        this->batch = Batch(batch_size, inputs);
+    
+    this->batch_size = batch_size;
 
     this->beta_param = 1.0;
 }

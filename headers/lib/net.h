@@ -14,12 +14,10 @@ class Net
      */
     uint32_t output_size;
 
-    pattern_set input_data;
-
     /**
-     * Vector of layers
+     * Input data set
      */
-    std::vector<Layer> layers;
+    pattern_set input_data;
 
 public:
 
@@ -63,6 +61,12 @@ public:
      */
     double MSE;
 
+    
+    /**
+     * Vector of all layers
+     */
+    std::vector<Layer> layers;
+
     /**
      * Feed network with sample
      * just gets output value of each neuron
@@ -84,7 +88,11 @@ public:
      */
     Net(pattern_set &input_data);
 
-    void setup(std::vector<uint32_t> &hidden_layers);
+
+    /**
+     * Setup internal vectors according to class properties
+     */
+    void setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size = 0);
 
     ~Net();
 };

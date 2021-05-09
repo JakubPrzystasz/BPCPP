@@ -78,7 +78,7 @@ Input:
 
 Net::Net(pattern_set &input_data)
 {
-    this->output_layer_range = std::make_pair(-0.5,0.5);
+    this->output_layer_range = std::make_pair(-0.5, 0.5);
 
     /*
         Validate input data
@@ -93,10 +93,10 @@ Net::Net(pattern_set &input_data)
     for (auto &set : input_data)
     {
         if (set.input.size() != this->input_size)
-            throw std::invalid_argument(std::string("Invalid input pattern size at: ") + std::to_string(it));
+            throw std::invalid_argument(std::string("Invalid input pattern size at: ") + std::to_string(it + 1));
 
         if (set.output.size() != this->output_size)
-            throw std::invalid_argument(std::string("Invalid output pattern size at: ") + std::to_string(it));
+            throw std::invalid_argument(std::string("Invalid output pattern size at: ") + std::to_string(it + 1));
 
         it++;
     }
@@ -104,20 +104,24 @@ Net::Net(pattern_set &input_data)
     this->input_data = input_data;
 }
 
-void Net::setup(std::vector<uint32_t> &hidden_layers)
+void Net::setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size)
 {
+    this->batch_size = batch_size;
+
     //Setup layers
     this->layers = std::vector<Layer>();
-    //input layer
-    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_constans));
 
-    auto range = std::make_pair(-1.0,1.0);
+    //Random number range for hidden layers
+    auto range = std::make_pair(-1.0, 1.0);
+
+    //input layer
+    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_constans, range, batch_size));
 
     for (uint32_t i{0}; i < hidden_layers.size(); i++)
-        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), learning_rate, momentum_const,range));
+        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), learning_rate, momentum_constans, range, batch_size));
 
     //output layer
-    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, this->output_layer_range));
+    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_constans, this->output_layer_range, batch_size));
 }
 
 Net::~Net() {}
@@ -126,8 +130,8 @@ void Net::feed(uint32_t data_row_num)
 {
 
     //First set input layer
-    auto &layer = this->layers[0];
-    auto &data = this->input[data_row_num];
+    auto &layer = this->layers.front();
+    auto &data = this->input_data[data_row_num].input;
 
     for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
     {
@@ -163,7 +167,7 @@ void Net::train(uint32_t data_row_num)
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
     {
         auto &neuron = last_layer.neurons[neuron_it];
-        neuron.delta = (neuron.output - target[data_row_num][neuron_it]) * neuron.derivative_output;
+        neuron.delta = (neuron.output - this->input_data[data_row_num].output[neuron_it]) * neuron.derivative_output;
     }
 
     for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
@@ -205,7 +209,7 @@ void Net::train(uint32_t data_row_num)
     }
 
     //Calculate error and SSE
-    auto &target = this->target[data_row_num];
+    auto &target = this->input_data[data_row_num].output;
     static double error = 0;
 
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)

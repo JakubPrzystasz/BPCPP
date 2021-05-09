@@ -3,15 +3,16 @@
 #include "includes.h"
 
 namespace ActivationFunction
-{	
-	inline double __normalize(double value){
-		if(std::isinf(value))
-        {
-            if(value > 0.0)
-                value = std::numeric_limits<double>::max();
-            else
-                value = std::numeric_limits<double>::min();
-        }
+{
+	inline double __normalize(double value)
+	{
+		if (std::isinf(value))
+		{
+			if (value > 0.0)
+				value = std::numeric_limits<double>::max();
+			else
+				value = std::numeric_limits<double>::min();
+		}
 		return value;
 	}
 
@@ -52,17 +53,45 @@ namespace ActivationFunction
 class Neuron
 {
 public:
-	
+	/**
+	 * Store weights and bias updates of each pattern in batch
+	 */
+	struct Batch
+	{
+		data_row bias_updates;
+		data_set weights_updates;
+		Batch(uint32_t batch_size, uint32_t weights_count)
+		{
+			bias_updates = data_row(batch_size);
+			weights_updates = data_set(batch_size);
+			for (uint32_t i{0}; i < weights_count; i++)
+				weights_updates[i] = data_row(weights_count);
+		}
+		Batch()
+		{
+		}
+	};
+
+	/**
+	 * Batch updates values for each input
+	 */
+	Batch batch;
+
+	/**
+	 * Size of batch
+	 */
+	uint32_t batch_size;
+
 	/**
 	 * Output of activation function
 	 */
 	double output;
-	
+
 	/**
 	 * Input value to activation function
 	 */
 	double input;
-	
+
 	/**
 	 * Output of derivative function
 	 */
@@ -72,7 +101,6 @@ public:
 	 * Delta value
 	 */
 	double delta;
-
 
 	/**
      * Bias of neuron
@@ -101,8 +129,10 @@ public:
 
 	/**
      * @arg inputs - number of neurons in previous layer
+	 * @arg range - pair of double values, first min, second max - defines range for random weights and biases
+	 * @arg batch_size - size of batch - if 0 uses stochastic method
      */
-	Neuron(uint32_t inputs, rand_range &range, func_ptr activation = ActivationFunction::bipolar, func_ptr derivative = ActivationFunction::bipolar_derivative);
+	Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size = 0, func_ptr activation = ActivationFunction::bipolar, func_ptr derivative = ActivationFunction::bipolar_derivative);
 
 	~Neuron();
 };
