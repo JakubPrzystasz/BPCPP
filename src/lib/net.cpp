@@ -76,136 +76,140 @@ Input:
     }
 }
 
-// Net::Net(pattern_set &input_data)
-// {
-//     /*
-//         Validate input data
-//     */
-//     if (input_data.size() == 0)
-//         throw std::invalid_argument("Input data set is empty");
+Net::Net(pattern_set &input_data)
+{
+    this->output_layer_range = std::make_pair(-0.5,0.5);
 
-//     this->input_size = input_data.front().input.size();
-//     this->output_size = input_data.front().output.size();
+    /*
+        Validate input data
+    */
+    if (input_data.size() == 0)
+        throw std::invalid_argument("Input data set is empty");
 
-//     uint32_t it{0};
-//     for (auto &set : input_data)
-//     {
-//         if (set.input.size() != this->input_size)
-//             throw std::invalid_argument(std::string("Invalid input pattern size at: ") + std::to_string(it));
+    this->input_size = input_data.front().input.size();
+    this->output_size = input_data.front().output.size();
 
-//         if (set.output.size() != this->output_size)
-//             throw std::invalid_argument(std::string("Invalid output pattern size at: ") + std::to_string(it));
+    uint32_t it{0};
+    for (auto &set : input_data)
+    {
+        if (set.input.size() != this->input_size)
+            throw std::invalid_argument(std::string("Invalid input pattern size at: ") + std::to_string(it));
 
-//         it++;
-//     }
+        if (set.output.size() != this->output_size)
+            throw std::invalid_argument(std::string("Invalid output pattern size at: ") + std::to_string(it));
 
-//     this->input_data = input_data;
-// }
+        it++;
+    }
 
-// void Net::setup(std::vector<uint32_t> &hidden_layers);
-// {
-//     //Setup layers
-//     this->layers = std::vector<Layer>();
-//     //input layer
-//     this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_const));
+    this->input_data = input_data;
+}
 
-//     for (uint32_t i{0}; i < layers.size(); i++)
-//         this->layers.push_back(Layer(layers[i], (i > 0 ? layers[i - 1] : input_size), learning_rate, momentum_const));
+void Net::setup(std::vector<uint32_t> &hidden_layers)
+{
+    //Setup layers
+    this->layers = std::vector<Layer>();
+    //input layer
+    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_constans));
 
-//     //output layer
-//     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, -0.5, 0.5));
-// }
+    auto range = std::make_pair(-1.0,1.0);
 
-// Net::~Net() {}
+    for (uint32_t i{0}; i < hidden_layers.size(); i++)
+        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), learning_rate, momentum_const,range));
 
-// void Net::feed(uint32_t data_row_num)
-// {
+    //output layer
+    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_const, this->output_layer_range));
+}
 
-//     //First set input layer
-//     auto &layer = this->layers[0];
-//     auto &data = this->input[data_row_num];
+Net::~Net() {}
 
-//     for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
-//     {
-//         auto &neuron = layer.neurons[neuron_it];
+void Net::feed(uint32_t data_row_num)
+{
 
-//         neuron.input = neuron.output = neuron.derivative_output = data[neuron_it];
-//     }
+    //First set input layer
+    auto &layer = this->layers[0];
+    auto &data = this->input[data_row_num];
 
-//     //Set hidden layers and output layer
-//     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-//     {
-//         auto &layer = this->layers[layer_it];
-//         auto &prev_layer = this->layers[layer_it - 1];
+    for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+    {
+        auto &neuron = layer.neurons[neuron_it];
 
-//         for (auto &neuron : layer.neurons)
-//         {
-//             neuron.output = neuron.bias;
-//             for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
-//                 neuron.output += (neuron.weights[weight_it] * prev_layer.neurons[weight_it].output);
-//             neuron.output = neuron.activation(neuron.output, &(neuron.beta_param));
-//             neuron.derivative_output = neuron.derivative(neuron.output, &(neuron.beta_param));
-//         }
-//     }
-// }
+        neuron.input = neuron.output = neuron.derivative_output = data[neuron_it];
+    }
 
-// void Net::train(uint32_t data_row_num)
-// {
-//     this->feed(data_row_num);
+    //Set hidden layers and output layer
+    for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+    {
+        auto &layer = this->layers[layer_it];
+        auto &prev_layer = this->layers[layer_it - 1];
 
-//     //Find delta for each neuron
-//     //Calculate delta of the last layer
-//     auto &last_layer = this->layers.back();
-//     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
-//     {
-//         auto &neuron = last_layer.neurons[neuron_it];
-//         neuron.delta = (neuron.output - target[data_row_num][neuron_it]) * neuron.derivative_output;
-//     }
+        for (auto &neuron : layer.neurons)
+        {
+            neuron.output = neuron.bias;
+            for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
+                neuron.output += (neuron.weights[weight_it] * prev_layer.neurons[weight_it].output);
+            neuron.output = neuron.activation(neuron.output, &(neuron.beta_param));
+            neuron.derivative_output = neuron.derivative(neuron.output, &(neuron.beta_param));
+        }
+    }
+}
 
-//     for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
-//     {
-//         auto &layer = this->layers[layer_it];
-//         for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
-//         {
-//             auto &neuron = layer.neurons[neuron_it];
+void Net::train(uint32_t data_row_num)
+{
+    this->feed(data_row_num);
 
-//             double sum = 0;
-//             for (uint32_t next{0}; next < this->layers[layer_it + 1].neurons.size(); next++)
-//             {
-//                 auto &next_neuron = this->layers[layer_it + 1].neurons[next];
-//                 sum += next_neuron.weights[neuron_it] * next_neuron.delta;
-//             }
+    //Find delta for each neuron
+    //Calculate delta of the last layer
+    auto &last_layer = this->layers.back();
+    for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
+    {
+        auto &neuron = last_layer.neurons[neuron_it];
+        neuron.delta = (neuron.output - target[data_row_num][neuron_it]) * neuron.derivative_output;
+    }
 
-//             //calculate the delta for current neuron
-//             neuron.delta = sum * neuron.derivative_output;
-//         }
-//     }
+    for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
+    {
+        auto &layer = this->layers[layer_it];
+        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+        {
+            auto &neuron = layer.neurons[neuron_it];
 
-//     static double delta;
+            double sum = 0;
+            for (uint32_t next{0}; next < this->layers[layer_it + 1].neurons.size(); next++)
+            {
+                auto &next_neuron = this->layers[layer_it + 1].neurons[next];
+                sum += next_neuron.weights[neuron_it] * next_neuron.delta;
+            }
 
-//     //Update weights and biases
-//     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-//     {
-//         auto &layer = this->layers[layer_it];
-//         for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
-//         {
-//             auto &neuron = layer.neurons[neuron_it];
+            //calculate the delta for current neuron
+            neuron.delta = sum * neuron.derivative_output;
+        }
+    }
 
-//             delta = -1.0 * neuron.delta * layer.learning_rate;
+    static double delta;
 
-//             neuron.bias += delta;
+    //Update weights and biases
+    for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+    {
+        auto &layer = this->layers[layer_it];
+        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+        {
+            auto &neuron = layer.neurons[neuron_it];
 
-//             for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
-//                 neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
-//         }
-//     }
+            delta = -1.0 * neuron.delta * layer.learning_rate;
 
-//     //Calculate error and SSE
-//     auto &target = this->target[data_row_num];
-//     static double error = 0;
+            neuron.bias += delta;
 
-//     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
-//         error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);
+            for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
+        }
+    }
 
-//     this->SSE += (error / last_layer.neurons.size());
-// }
+    //Calculate error and SSE
+    auto &target = this->target[data_row_num];
+    static double error = 0;
+
+    for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
+        error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);
+
+    this->SSE += (error / last_layer.neurons.size());
+}

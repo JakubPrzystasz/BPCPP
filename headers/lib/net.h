@@ -43,9 +43,15 @@ public:
     double learning_rate;
 
     /**
-         * Momentum constans
-         */
+        * Momentum constans
+    */
     double momentum_constans;
+
+
+    /**
+     * Range for random values of initial weights and bias for output layer neurons
+     */
+    std::pair<double,double> output_layer_range;
 
     /**
      * SSE 

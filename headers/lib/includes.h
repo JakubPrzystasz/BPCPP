@@ -21,6 +21,7 @@ struct Pattern;
 typedef std::vector<double> data_row;
 typedef std::vector<data_row> data_set;
 typedef std::vector<Pattern> pattern_set;
+typedef std::pair<double,double> rand_range;
 typedef double (*func_ptr)(double, double *);
 
 struct Pattern{
@@ -36,4 +37,4 @@ struct Pattern{
 };
 
 
-double random_value(double min,double max);
+double random_value(rand_range &range);

@@ -31,7 +31,7 @@ public:
     * @arg neurons - number of neurons
     * @arg inputs - number of inputs
     */
-    Layer(uint32_t neurons, uint32_t inputs, double learning_rate, double momentum_const, double rand_min = -1.0, double rand_max = 1.0);
+    Layer(uint32_t neurons, uint32_t inputs, double learning_rate, double momentum_const, rand_range &range);
 
     ~Layer(){};
 
