@@ -6,7 +6,7 @@ double random_value(rand_range &range)
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
     rng.seed(ss);
-    std::uniform_real_distribution<double> unif(std::get<0>(range), std::get<0>(range));
+    std::uniform_real_distribution<double> unif(static_cast<double>(std::get<0>(range)), static_cast<double>(std::get<1>(range)));
     return unif(rng);
 }
 
@@ -61,11 +61,11 @@ Neuron::Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size, func_ptr
     this->weights = data_row(inputs);
 
     for (auto &weight : this->weights)
-        weight = 0.5;
-        //weight = random_value(range);
+        weight = random_value(range);
+        //weight = 0.5;
 
-    this->bias = 0.5;
-    //this->bias = random_value(range);
+    //this->bias = 0.5;
+    this->bias = random_value(range);
 
     //Batch size is greater than zero so, initialize batch vector
     if(batch_size)

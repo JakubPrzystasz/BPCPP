@@ -19,8 +19,6 @@ class Net
      */
     pattern_set input_data;
 
-//TODO:
-public:
     /**
      * Iterator over values in single batch
      */
@@ -31,6 +29,13 @@ public:
      */
     double SSE_previous;
 
+
+    /**
+     * Train network
+     * computes SSE, MSE, outputs
+     * It just does one Epoch of training set
+     */
+    void __train(uint32_t sample_number);
 public:
 
     /**
@@ -97,12 +102,9 @@ public:
      */
     void feed(uint32_t sample_number);
 
-    /**
-     * Train network
-     * computes SSE, MSE, outputs
-     * It just does one Epoch of training set
-     */
-    void train(uint32_t sample_number);
+
+    void train(double max_epoch = 1000, double error_goal = 0);
+
 
     /**
      *  Constructor of neural network

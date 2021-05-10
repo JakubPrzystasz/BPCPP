@@ -16,42 +16,13 @@ int main()
     output_plot = data_row(input.size());
     target_plot = data_row(input.size());
 
-    std::vector<uint32_t> index(input.size(), 0);
-    for (uint32_t i{0}; i < input.size(); i++)
-        index[i] = i;
-
-    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
-
-    //shuffle(index.begin(), index.end(), std::default_random_engine(seed));
-
-    uint32_t it{0};
-
-    auto begin = std::chrono::high_resolution_clock::now();
-    while (true)
-    {
-        myNet.batch_it = 0;
-        for (uint32_t i{0}; i < input.size(); i++, myNet.batch_it++){
-            myNet.train(index[i]);
-            std::cout << myNet.SSE << std::endl;
-        }
-
-//        myNet.SSE = myNet.SSE / static_cast<double>(input.size());
-
-        if(myNet.SSE < 0.1)
-            break;
-
-        if (it == 1000)
-            break;
-        it++;
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
+    myNet.train(10000);
 
     auto &out = myNet.layers.back().neurons;
 
     for (uint32_t i{0}; i < input.size(); i++)
     {
-        myNet.train(i);
+        myNet.feed(i);
         output_plot[i] = out[0].output;
     }
 

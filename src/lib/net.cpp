@@ -163,7 +163,7 @@ void Net::feed(uint32_t sample_number)
     }
 }
 
-void Net::train(uint32_t sample_number)
+void Net::__train(uint32_t sample_number)
 {
     this->feed(sample_number);
 
@@ -255,22 +255,34 @@ void Net::train(uint32_t sample_number)
     auto &target = this->input_data[sample_number].output;
     double error{0};
 
-    this->SSE_previous = this->SSE;
-    this->SSE = 0;
-
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
         error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);
 
     this->SSE += (error / last_layer.neurons.size());
 
-
     //Adaptive learning rate:
     //uses bold driver method
-    if(this->learning_accelerating_constans > 0 && this->learning_decelerating_constans > 0){
-        if(this->SSE_previous > this->SSE)
+    if (this->learning_accelerating_constans > 0 && this->learning_decelerating_constans > 0)
+    {
+        if (this->SSE_previous > this->SSE)
             this->learning_rate *= this->learning_accelerating_constans;
         else
             this->learning_rate *= this->learning_decelerating_constans;
+    }
+}
 
+void Net::train(double max_epoch, double error_goal)
+{
+
+    for (uint32_t epoch{0}; epoch < max_epoch; epoch++)
+    {
+        for (this->batch_it = 0; this->batch_it < input_data.size(); this->batch_it++)
+            this->__train(batch_it);
+            
+        std::cout << "Epoch: " << epoch << "  SSE: " << this->SSE << "  MSE:" << this->SSE / static_cast<double>(input_data.size()) << std::endl;
+
+        if (this->SSE <= error_goal)
+            break;
+        this->SSE = 0;
     }
 }
