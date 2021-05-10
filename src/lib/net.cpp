@@ -107,6 +107,7 @@ Net::Net(pattern_set &input_data)
 void Net::setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size)
 {
     this->learning_rate = 0.01;
+    this->momentum_constans = 0;
 
     this->batch_size = batch_size;
     //If 0 set to size of whole input set -- full batch
@@ -255,6 +256,7 @@ void Net::train(uint32_t sample_number)
     double error{0};
 
     this->SSE_previous = this->SSE;
+    this->SSE = 0;
 
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
         error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);

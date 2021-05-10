@@ -7,7 +7,7 @@ int main()
     Net::read_file(std::string("INPUT_DATA.txt"), input);
 
     //Define hidden layers
-    std::vector<uint32_t> layers{6, 3};
+    std::vector<uint32_t> layers{6};
 
     auto myNet = Net(input);
     myNet.setup(layers, 1);
@@ -22,18 +22,21 @@ int main()
 
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-    shuffle(index.begin(), index.end(), std::default_random_engine(seed));
+    //shuffle(index.begin(), index.end(), std::default_random_engine(seed));
 
     uint32_t it{0};
 
     auto begin = std::chrono::high_resolution_clock::now();
     while (true)
     {
-        myNet.SSE = 0;
-        for (uint32_t i{0}; i < input.size(); i++, myNet.batch_it++)
+        myNet.batch_it = 0;
+        for (uint32_t i{0}; i < input.size(); i++, myNet.batch_it++){
             myNet.train(index[i]);
+            std::cout << myNet.SSE << std::endl;
+        }
 
-        myNet.SSE = myNet.SSE / static_cast<double>(input.size());
+//        myNet.SSE = myNet.SSE / static_cast<double>(input.size());
+
         if(myNet.SSE < 0.1)
             break;
 

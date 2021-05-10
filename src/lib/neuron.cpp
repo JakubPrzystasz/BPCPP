@@ -61,9 +61,11 @@ Neuron::Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size, func_ptr
     this->weights = data_row(inputs);
 
     for (auto &weight : this->weights)
-        weight = random_value(range);
+        weight = 0.5;
+        //weight = random_value(range);
 
-    this->bias = random_value(range);
+    this->bias = 0.5;
+    //this->bias = random_value(range);
 
     //Batch size is greater than zero so, initialize batch vector
     if(batch_size)
