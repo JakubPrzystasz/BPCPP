@@ -6,17 +6,17 @@ int main()
     pattern_set input;
     Net::read_file(std::string("INPUT_DATA.txt"), input);
 
-    //Define hidden layers
-    std::vector<uint32_t> layers{6};
+    auto myNet = Net(input, {0.8, 0.1, 0.1});
 
-    auto myNet = Net(input);
-    myNet.setup(layers, 1);
+    LearnParams netParams = LearnParams();
+
+    myNet.setup({6, 3}, netParams);
 
     data_row x, target_plot, output_plot;
     output_plot = data_row(input.size());
     target_plot = data_row(input.size());
 
-    myNet.train(10000);
+    myNet.train(500, 0.1);
 
     auto &out = myNet.layers.back().neurons;
 

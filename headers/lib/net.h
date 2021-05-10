@@ -4,6 +4,7 @@
 
 class Net
 {
+
     /**
      * Size of input layer
      */
@@ -29,70 +30,46 @@ class Net
      */
     double SSE_previous;
 
-
     /**
-     * Train network
-     * computes SSE, MSE, outputs
-     * It just does one Epoch of training set
+     * Computes delta for each layer
+     * @arg index at input_data vector
      */
-    void __train(uint32_t sample_number);
+    void get_delta(uint32_t sample_number);
+
 public:
 
     /**
      * Read data form text file
      * put all data to input_data vector
+     * @arg filename - name of file with input data
+     * @arg input_data - reference to container for read data
      */
     static void read_file(std::string filename, pattern_set &input_data);
 
     /**
-         * Size of batch - it can be value in range 1 - number of samples
-         * if 0 - full batch (adjusted to number of samples for train set, validation set, and test set)
-         * if 1 - stochastic learning
-         * if greater - mini batch, but can not exceed number of samples in set
-         */
-    uint32_t batch_size;
+	 * Container for learning params, for all neurons in layer
+     * it is kind of blue print for making new neurons in that layer
+	 */
+    LearnParams learn_parameters;
 
     /**
-        * Learning rate must be less than 1  
-    */
-    double learning_rate;
-
-    /**
-        * Momentum constans
-    */
-    double momentum_constans;
-
-    /**
-        * Aka. gamma+ (page 160. Adaptive Learning of Polynominals)
+     * Percentage representation of training, validation, and test set
+     * Sum of values in array must be equal 1
      */
-    double learning_accelerating_constans;
+    std::array<double,3> subsets_ratio;
 
     /**
-        * Aka. gamma+ (page 160. Adaptive Learning of Polynominals)
-     */
-    double learning_decelerating_constans;
-
-
-
-
-    /**
-     * Range for random values of initial weights and bias for output layer neurons
-     */
-    std::pair<double,double> output_layer_range;
-
-    /**
-     * SSE 
+     * Sum squared error - value computed and the end of each epoch
      */
     double SSE;
 
     /**
-     * MSE
+     * Mean square error - mean of SSE/size of set
      */
     double MSE;
-
     
     /**
-     * Vector of all layers
+     * Contains input, hidden, and output layers
      */
     std::vector<Layer> layers;
 
@@ -102,23 +79,28 @@ public:
      */
     void feed(uint32_t sample_number);
 
-
+    /**
+     * Trains network
+     * @arg max_epoch - maximum number of training epochs
+     * @arg error_goal - when SSE is less or equal error goal, stops training 
+     */
     void train(double max_epoch = 1000, double error_goal = 0);
 
 
     /**
      *  Constructor of neural network
-     *  @arg input - input data set
-     *  @arg target - target data set
-     *  @arg layers - hidden layers vector
+     *  @arg input_data - input data set
+     *  Given data set will be divided to subsets: training, validation and test set
+     *  Each call of train makes new sets
+     *  @arg subsets_ratio - Percentage representation of training, validation, and test set
      */
-    Net(pattern_set &input_data);
+    Net(pattern_set &input_data, std::array<double,3> subsets_ratio);
 
 
     /**
-     * Setup internal vectors according to class properties
+     * Setup internal vectors according to net properties
      */
-    void setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size = 1);
+    void setup(std::vector<uint32_t> hidden_layers, LearnParams params);
 
     ~Net();
 };
@@ -133,5 +115,4 @@ TODO:
     Questions:
     can i use bigger momentum delta vector?
     is it ok to use just one method of adaping learning rate, or make experiment with it? 
-
 */

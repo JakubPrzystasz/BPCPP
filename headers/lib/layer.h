@@ -2,29 +2,19 @@
 
 #include "neuron.h"
 
-class Layer
+struct Layer
 {
-public:
+
+	/**
+	 * Container for learning params, for all neurons in layer
+     * it is kind of blue print for making new neurons in that layer
+	 */
+	LearnParams learn_parameters;
+
     /**
      * Number of neurons in previous layer
      */
     uint32_t inputs;
-
-    /**
-     * Learning rate for layer
-     */
-    double learning_rate;
-
-    /**
-     * Momentum for layer
-     */
-    double momentum_const;
-
-
-    /**
-     * Size of batch
-     */
-    uint32_t batch_size;
 
     /**
      * Container for neurons 
@@ -35,13 +25,10 @@ public:
      * Constructor of single layer
     * As an argument it takes number of neurons, and number of neurons in previous layers
     * @arg neurons - number of neurons
-    * @arg inputs - number of inputs
-    * @arg learning_rate
-    * @arg momentum_const
-    * @arg range - pair of double, first is min, second is max - defines range for weights and biases initailization random values
-    * @arg batch_size 
+    * @arg inputs - number of inputs (neurons in previous layer)
+    * @arg params - learning parameters for each neuron 
     */
-    Layer(uint32_t neurons, uint32_t inputs, double learning_rate, double momentum_const, rand_range &range, uint32_t batch_size = 1);
+    Layer(uint32_t neurons, uint32_t inputs, LearnParams params);
 
     ~Layer(){};
 

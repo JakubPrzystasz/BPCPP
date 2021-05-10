@@ -39,10 +39,6 @@ namespace ActivationFunction
 
     double purelin(double input, double *params)
     {
-        if (input > 1.0)
-            return 1.0;
-        if (input < -1.0)
-            return -1.0;
         return input;
     }
 
@@ -52,30 +48,31 @@ namespace ActivationFunction
     }
 };
 
-Neuron::Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size, func_ptr activation, func_ptr derivative)
+Neuron::Neuron(uint32_t inputs, LearnParams params)
 {
+    if(!batch_size)
+        throw std::invalid_argument(std::string("Batch size can not be 0"));
 
-    this->activation = activation;
-    this->derivative = derivative;
+    this->learn_parameters = params;
+    
+    // Assign pointers to activation functions
+    this->activation = this->learn_parameters.activation;
+    this->derivative = this->learn_parameters.derivative;
 
+    //Initialize weights and bias with random values
     this->weights = data_row(inputs);
 
     for (auto &weight : this->weights)
-        weight = random_value(range);
-        //weight = 0.5;
+        weight = random_value(this->learn_parameters.weights_range);
 
-    //this->bias = 0.5;
-    this->bias = random_value(range);
+    this->bias = random_value(this->learn_parameters.bias_range);
 
-    //Batch size is greater than zero so, initialize batch vector
-    if(batch_size)
-        this->batch = Batch(inputs);
-    
-    this->batch_size = batch_size;
-
-    this->weights_deltas = data_row(inputs, 0);
-
-    this->beta_param = 1.0;
+    //Initialize batch vector
+    this->batch = Batch(inputs);
+    //Weight delta for momentum method
+    this->weights_deltas = data_set(this->learn_parameters.momentum_delta_vsize);
+    for(auto &vec: this->weights_deltas)
+        vec = data_row(inputs);
 }
 
 Neuron::~Neuron() {}

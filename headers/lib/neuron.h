@@ -50,9 +50,8 @@ namespace ActivationFunction
 /**
  * Implementation of simple neuron,
  */
-class Neuron
+struct Neuron
 {
-public:
 	/**
 	 * Store weights and bias updates of each pattern in batch
 	 */
@@ -60,12 +59,18 @@ public:
 	{
 		double bias_deltas;
 		data_row weights_deltas;
-		Batch(uint32_t weights_count){
-			weights_deltas= data_row(weights_count);
+		Batch(uint32_t weights_count)
+		{
+			weights_deltas = data_row(weights_count);
 			bias_deltas = 0;
 		}
-		Batch(){}
+		Batch() {}
 	};
+
+	/**
+	 * Container for learning params
+	 */
+	LearnParams learn_parameters;
 
 	/**
 	 * Batch updates values for each input
@@ -73,14 +78,9 @@ public:
 	Batch batch;
 
 	/**
-	 * Size of batch
+	 * Delta of weight update from the last epoch
 	 */
-	uint32_t batch_size;
-
-	/**
-	 * Delta of weight update from the last iteration
-	 */
-	data_row weights_deltas;
+	data_set weights_deltas;
 
 	/**
 	 * Output of activation function
@@ -123,16 +123,10 @@ public:
 	func_ptr derivative;
 
 	/**
-	 * Beta parameter
-	 */
-	double beta_param;
-
-	/**
      * @arg inputs - number of neurons in previous layer
-	 * @arg range - pair of double values, first min, second max - defines range for random weights and biases
-	 * @arg batch_size 
+	 * @arg params - neuron learning parameters 
      */
-	Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size = 0, func_ptr activation = ActivationFunction::bipolar, func_ptr derivative = ActivationFunction::bipolar_derivative);
+	Neuron(uint32_t inputs, LearnParams params);
 
 	~Neuron();
 };

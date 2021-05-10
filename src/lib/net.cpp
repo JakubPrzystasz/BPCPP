@@ -2,31 +2,10 @@
 
 void Net::read_file(std::string filename, pattern_set &input_data)
 {
-    /**
-Output:    
-    0) Class
-Input:
-    1) Alcohol
- 	2) Malic acid
- 	3) Ash
-	4) Alcalinity of ash  
- 	5) Magnesium
-	6) Total phenols
- 	7) Flavanoids
- 	8) Nonflavanoid phenols
- 	9) Proanthocyanins
-	10)Color intensity
- 	11)Hue
- 	12)OD280/OD315 of diluted wines
- 	13)Proline
-     */
     std::ifstream input_file(filename);
 
     if (!input_file)
-    {
-        std::cout << "Unable to open input data file" << std::endl;
-        exit(-1);
-    }
+        throw std::invalid_argument("Error in opening input file");
 
     /**
      * input_size - size of input layer
@@ -76,10 +55,8 @@ Input:
     }
 }
 
-Net::Net(pattern_set &input_data)
+Net::Net(pattern_set &input_data, std::array<double,3> subsets_ratio)
 {
-    this->output_layer_range = std::make_pair(-0.5, 0.5);
-
     /*
         Validate input data
     */
@@ -96,38 +73,45 @@ Net::Net(pattern_set &input_data)
             throw std::invalid_argument(std::string("Invalid input pattern size at: ") + std::to_string(it + 1));
 
         if (set.output.size() != this->output_size)
-            throw std::invalid_argument(std::string("Invalid output pattern size at: ") + std::to_string(it + 1));
-
+            
         it++;
     }
+    
 
+    //Assign given parameters
     this->input_data = input_data;
+
+    //Verify subsets_ratio
+    {
+        double tmp = 0;
+        for(auto &value: subsets_ratio)
+            tmp += value;
+        if(tmp != 1)
+            throw std::invalid_argument(std::string("Sum of subsets ratio is not equal 1"));
+    }
+
+    this->subsets_ratio = subsets_ratio;
 }
 
-void Net::setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size)
+void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
 {
-    this->learning_rate = 0.01;
-    this->momentum_constans = 0;
+    this->learn_parameters = params;
 
-    this->batch_size = batch_size;
-    //If 0 set to size of whole input set -- full batch
-    if (batch_size == 0)
-        this->batch_size = this->input_data.size();
+    //If params.batch_size is 0, then set batch_size equal to size of whole training set
+    if (this->learn_parameters.batch_size == 0)
+        this->learn_parameters.batch_size = this->input_data.size() * this->subsets_ratio.front();
 
     //Setup layers
     this->layers = std::vector<Layer>();
 
-    //Random number range for hidden layers
-    auto range = std::make_pair(-1.0, 1.0);
-
     //input layer
-    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_constans, range, this->batch_size));
+    this->layers.push_back(Layer(this->input_size, this->input_size, params));
 
     for (uint32_t i{0}; i < hidden_layers.size(); i++)
-        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), learning_rate, momentum_constans, range, this->batch_size));
+        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), params));
 
     //output layer
-    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_constans, this->output_layer_range, this->batch_size));
+    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), params));
 }
 
 Net::~Net() {}
@@ -163,12 +147,9 @@ void Net::feed(uint32_t sample_number)
     }
 }
 
-void Net::__train(uint32_t sample_number)
+void Net::get_delta(uint32_t sample_number)
 {
-    this->feed(sample_number);
-
     //Find delta for each neuron in each layer starting from output layer
-
     //Calculate delta of the output layer
     auto &last_layer = this->layers.back();
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
@@ -212,7 +193,7 @@ void Net::__train(uint32_t sample_number)
             if (batch_size == 1)
             {
                 neuron.bias += delta;
-                if (momentum_constans > 0)
+                if (this->momentum_constans > 0)
                 {
                     for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
                     {
@@ -239,13 +220,14 @@ void Net::__train(uint32_t sample_number)
                 //Update weights and biases
                 if ((batch_it % batch_size) == 0)
                 {
-                    neuron.bias += (neuron.batch.bias_deltas / static_cast<double>(neuron.batch_size));
+                    neuron.bias += (static_cast<double>(neuron.batch.bias_deltas) / static_cast<double>(neuron.batch_size));
+                    neuron.batch.bias_deltas = 0;
+
                     for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
                     {
-                        neuron.weights[weights_it] += (neuron.batch.weights_deltas[weights_it] / static_cast<double>(neuron.batch_size));
+                        neuron.weights[weights_it] += (static_cast<double>(neuron.batch.weights_deltas[weights_it]) / static_cast<double>(neuron.batch_size));
                         neuron.batch.weights_deltas[weights_it] = 0;
                     }
-                    neuron.batch.bias_deltas = 0;
                 }
             }
         }
@@ -258,17 +240,8 @@ void Net::__train(uint32_t sample_number)
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
         error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);
 
-    this->SSE += (error / last_layer.neurons.size());
+    this->SSE += (error / static_cast<double>(last_layer.neurons.size()));
 
-    //Adaptive learning rate:
-    //uses bold driver method
-    if (this->learning_accelerating_constans > 0 && this->learning_decelerating_constans > 0)
-    {
-        if (this->SSE_previous > this->SSE)
-            this->learning_rate *= this->learning_accelerating_constans;
-        else
-            this->learning_rate *= this->learning_decelerating_constans;
-    }
 }
 
 void Net::train(double max_epoch, double error_goal)
@@ -277,12 +250,28 @@ void Net::train(double max_epoch, double error_goal)
     for (uint32_t epoch{0}; epoch < max_epoch; epoch++)
     {
         for (this->batch_it = 0; this->batch_it < input_data.size(); this->batch_it++)
-            this->__train(batch_it);
-            
-        std::cout << "Epoch: " << epoch << "  SSE: " << this->SSE << "  MSE:" << this->SSE / static_cast<double>(input_data.size()) << std::endl;
+        {
+            this->feed(batch_it);
+            //Get delta and SSE
+            this->get_delta(batch_it);
+        }
+
+        if ((epoch % 10) == 0)
+            std::cout << "Epoch: " << epoch << "  SSE: " << this->SSE << "  MSE:" << this->SSE / static_cast<double>(input_data.size()) << std::endl;
 
         if (this->SSE <= error_goal)
             break;
+
+        //Adaptive learning rate:
+        //uses bold driver method
+        if (this->learning_accelerating_constans > 0 && this->learning_decelerating_constans > 0)
+        {
+            if (this->SSE_previous > this->SSE)
+                this->learning_rate = this->learning_rate * this->learning_accelerating_constans;
+            else
+                this->learning_rate = this->learning_rate * this->learning_decelerating_constans;
+        }
+        this->SSE_previous = this->SSE;
         this->SSE = 0;
     }
 }
