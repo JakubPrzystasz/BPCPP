@@ -19,10 +19,17 @@ class Net
      */
     pattern_set input_data;
 
+//TODO:
+public:
     /**
      * Iterator over values in single batch
      */
     uint32_t batch_it;
+
+    /**
+     * Previous value of SSE - for adaptive learning rate
+     */
+    double SSE_previous;
 
 public:
 
@@ -41,14 +48,26 @@ public:
     uint32_t batch_size;
 
     /**
-         * Learning rate must be less than 1  
-        */
+        * Learning rate must be less than 1  
+    */
     double learning_rate;
 
     /**
         * Momentum constans
     */
     double momentum_constans;
+
+    /**
+        * Aka. gamma+ (page 160. Adaptive Learning of Polynominals)
+     */
+    double learning_accelerating_constans;
+
+    /**
+        * Aka. gamma+ (page 160. Adaptive Learning of Polynominals)
+     */
+    double learning_decelerating_constans;
+
+
 
 
     /**
@@ -109,8 +128,8 @@ TODO:
     train set, validate set, and test set. in default proportion 80,15,5
     but every set must have each class
 
-    Make batch learning.
-
-    Add adaptive learning rate, and momentum with variable momentum delta
+    Questions:
+    can i use bigger momentum delta vector?
+    is it ok to use just one method of adaping learning rate, or make experiment with it? 
 
 */

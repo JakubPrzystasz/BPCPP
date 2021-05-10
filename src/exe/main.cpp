@@ -4,51 +4,47 @@
 int main()
 {
     pattern_set input;
-    Net::read_file(std::string("INPUT_DATA.txt"),input);
-
+    Net::read_file(std::string("INPUT_DATA.txt"), input);
 
     //Define hidden layers
-    std::vector<uint32_t> layers{6,3};
+    std::vector<uint32_t> layers{6, 3};
 
     auto myNet = Net(input);
-    myNet.setup(layers);
+    myNet.setup(layers, 1);
 
     data_row x, target_plot, output_plot;
     output_plot = data_row(input.size());
     target_plot = data_row(input.size());
 
-    std::vector<uint32_t> index(input.size(),0);
-    for(uint32_t i{0};i<input.size();i++)
+    std::vector<uint32_t> index(input.size(), 0);
+    for (uint32_t i{0}; i < input.size(); i++)
         index[i] = i;
 
     auto seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-    shuffle (index.begin(), index.end(), std::default_random_engine(seed));
+    shuffle(index.begin(), index.end(), std::default_random_engine(seed));
 
     uint32_t it{0};
-
-    auto &out = myNet.layers.back().neurons;
 
     auto begin = std::chrono::high_resolution_clock::now();
     while (true)
     {
         myNet.SSE = 0;
-        for (uint32_t i{0}; i < input.size(); i++)
+        for (uint32_t i{0}; i < input.size(); i++, myNet.batch_it++)
             myNet.train(index[i]);
 
-        //myNet.SSE = myNet.SSE / static_cast<double>(input.size());
-        // if(it % 10000 == 0){
-        //     std::cout << it << "  SSE: " << myNet.SSE << std::endl;
-        // }
+        myNet.SSE = myNet.SSE / static_cast<double>(input.size());
+        if(myNet.SSE < 0.1)
+            break;
 
-        if (it == 10000)
+        if (it == 1000)
             break;
         it++;
     }
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() << "ms" << std::endl;
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << std::endl;
 
-    return 0;
+    auto &out = myNet.layers.back().neurons;
 
     for (uint32_t i{0}; i < input.size(); i++)
     {
@@ -63,7 +59,6 @@ int main()
     plot0.drawDots(x, output_plot);
 
     plot0.legend().hide();
-    plot0.save("plot.png");
     plot0.show();
 
     return 0;

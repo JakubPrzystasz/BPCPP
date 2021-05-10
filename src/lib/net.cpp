@@ -106,6 +106,8 @@ Net::Net(pattern_set &input_data)
 
 void Net::setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size)
 {
+    this->learning_rate = 0.01;
+
     this->batch_size = batch_size;
     //If 0 set to size of whole input set -- full batch
     if (batch_size == 0)
@@ -118,13 +120,13 @@ void Net::setup(std::vector<uint32_t> &hidden_layers, uint32_t batch_size)
     auto range = std::make_pair(-1.0, 1.0);
 
     //input layer
-    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_constans, range, batch_size));
+    this->layers.push_back(Layer(this->input_size, this->input_size, learning_rate, momentum_constans, range, this->batch_size));
 
     for (uint32_t i{0}; i < hidden_layers.size(); i++)
-        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), learning_rate, momentum_constans, range, batch_size));
+        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), learning_rate, momentum_constans, range, this->batch_size));
 
     //output layer
-    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_constans, this->output_layer_range, batch_size));
+    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), learning_rate, momentum_constans, this->output_layer_range, this->batch_size));
 }
 
 Net::~Net() {}
@@ -193,7 +195,7 @@ void Net::train(uint32_t sample_number)
         }
     }
 
-    static double delta, batch_tmp;
+    double delta, delta_tmp;
 
     //Update weights and biases
     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
@@ -203,14 +205,29 @@ void Net::train(uint32_t sample_number)
         {
             auto &neuron = layer.neurons[neuron_it];
 
-            delta = -1.0 * neuron.delta * layer.learning_rate;
+            delta = -1.0 * neuron.delta * this->learning_rate;
 
             //Use faster stochastic method
             if (batch_size == 1)
             {
                 neuron.bias += delta;
-                for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
-                    neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
+                if (momentum_constans > 0)
+                {
+                    for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                    {
+                        delta_tmp = delta * this->layers[layer_it - 1].neurons[weights_it].output;
+
+                        neuron.weights[weights_it] += delta_tmp + momentum_constans * neuron.weights_deltas[weights_it];
+
+                        //store delta for next iteration
+                        neuron.weights_deltas[weights_it] = delta_tmp;
+                    }
+                }
+                else
+                {
+                    for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                        neuron.weights[weights_it] += delta * this->layers[layer_it - 1].neurons[weights_it].output;
+                }
             }
             else
             {
@@ -235,10 +252,23 @@ void Net::train(uint32_t sample_number)
 
     //Calculate error and SSE
     auto &target = this->input_data[sample_number].output;
-    static double error = 0;
+    double error{0};
+
+    this->SSE_previous = this->SSE;
 
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
         error += (target[neuron_it] - last_layer.neurons[neuron_it].output) * (target[neuron_it] - last_layer.neurons[neuron_it].output);
 
     this->SSE += (error / last_layer.neurons.size());
+
+
+    //Adaptive learning rate:
+    //uses bold driver method
+    if(this->learning_accelerating_constans > 0 && this->learning_decelerating_constans > 0){
+        if(this->SSE_previous > this->SSE)
+            this->learning_rate *= this->learning_accelerating_constans;
+        else
+            this->learning_rate *= this->learning_decelerating_constans;
+
+    }
 }

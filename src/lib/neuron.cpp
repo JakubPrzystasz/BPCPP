@@ -71,6 +71,8 @@ Neuron::Neuron(uint32_t inputs, rand_range &range, uint32_t batch_size, func_ptr
     
     this->batch_size = batch_size;
 
+    this->weights_deltas = data_row(inputs, 0);
+
     this->beta_param = 1.0;
 }
 

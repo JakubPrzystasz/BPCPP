@@ -78,6 +78,11 @@ public:
 	uint32_t batch_size;
 
 	/**
+	 * Delta of weight update from the last iteration
+	 */
+	data_row weights_deltas;
+
+	/**
 	 * Output of activation function
 	 */
 	double output;
