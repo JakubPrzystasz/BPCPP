@@ -11,11 +11,7 @@ int main()
     LearnParams netParams = LearnParams();
 
     myNet.setup({6, 3}, netParams);
-
-
-
-
-
+    myNet.train();
 
 
     // data_row x, target_plot, output_plot;

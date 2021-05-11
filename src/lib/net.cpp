@@ -57,7 +57,7 @@ void Net::read_file(std::string filename, pattern_set &input_data)
 
 void Net::train(double max_epoch, double error_goal)
 {
-/**
+    /**
  * 
  * Make vector of indexes for trainig, validate, and test sets
  * After each epoch make test
@@ -65,33 +65,80 @@ void Net::train(double max_epoch, double error_goal)
  * https://en.wikipedia.org/wiki/Training,_validation,_and_test_sets
  */
 
+    //shuffle values to all subsets
+    {
+        std::random_device rd;
+        std::mt19937 g(rd());
+
+        //Training set:
+        {
+            std::map<double, uint32_t> class_occurences;
+            //First is class, second: distr of class in subset
+            std::map<double, uint32_t> class_distr;
+
+            for (auto &cls : this->class_indexes)
+            {
+                class_distr.insert(std::make_pair(cls.first,
+                                                  static_cast<uint32_t>(
+                                                      floor(train_set.size() *
+                                                            (static_cast<double>(cls.second.size()) / this->input_data.size())))));
+            }
+
+            for (uint32_t i{0}; i < train_set.size(); i++)
+            {
+                bool value_set;
+                while (true)
+                {
+                    uint32_t class_id = std::round(random_value(rand_range(0.0, (double)this->classes_values.size())));
+                    if (class_distr[this->classes_values[class_id]] >= class_occurences[this->classes_values[class_id]])
+                    {
+                        for (uint32_t x{0}; x < tmp_indexes.size(); x++)
+                        {
+                            auto &index = tmp_indexes[x];
+                            if (index.first == this->classes_values[class_id])
+                            {
+                                train_set[i] = index.second;
+                                class_occurences[this->classes_values[class_id]] += 1;
+                                tmp_indexes.erase(tmp_indexes.begin() + x);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        std::cout << "DDD";
+    }
 
     for (uint32_t epoch{0}; epoch < max_epoch; epoch++)
     {
         for (this->batch_it = 0; this->batch_it < input_data.size(); this->batch_it++)
         {
+            //Feed network with data
             this->feed(batch_it);
             //Get delta and SSE
             this->get_delta(batch_it);
         }
 
-        if ((epoch % 10) == 0)
-            std::cout << "Epoch: " << epoch << "  SSE: " << this->SSE << "  MSE:" << this->SSE / static_cast<double>(input_data.size()) << std::endl;
+        // if ((epoch % 10) == 0)
+        //     std::cout << "Epoch: " << epoch << "  SSE: " << this->SSE << "  MSE:" << this->SSE / static_cast<double>(input_data.size()) << std::endl;
 
-        if (this->SSE <= error_goal)
-            break;
+        // if (this->SSE <= error_goal)
+        //     break;
 
-        //Adaptive learning rate:
-        //uses bold driver method
-        if (this->learning_accelerating_constans > 0 && this->learning_decelerating_constans > 0)
-        {
-            if (this->SSE_previous > this->SSE)
-                this->learning_rate = this->learning_rate * this->learning_accelerating_constans;
-            else
-                this->learning_rate = this->learning_rate * this->learning_decelerating_constans;
-        }
-        this->SSE_previous = this->SSE;
-        this->SSE = 0;
+        // //Adaptive learning rate:
+        // //uses bold driver method
+        // if (this->learning_accelerating_constans > 0 && this->learning_decelerating_constans > 0)
+        // {
+        //     if (this->SSE_previous > this->SSE)
+        //         this->learning_rate = this->learning_rate * this->learning_accelerating_constans;
+        //     else
+        //         this->learning_rate = this->learning_rate * this->learning_decelerating_constans;
+        // }
+        // this->SSE_previous = this->SSE;
+        // this->SSE = 0;
     }
 }
 
@@ -179,7 +226,7 @@ void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), params));
 }
 
-Net::Net(pattern_set &input_data, std::array<double,3> subsets_ratio)
+Net::Net(pattern_set &input_data, std::array<double, 3> subsets_ratio)
 {
     /*
         Validate input data
@@ -190,17 +237,17 @@ Net::Net(pattern_set &input_data, std::array<double,3> subsets_ratio)
     this->input_size = input_data.front().input.size();
     this->output_size = input_data.front().output.size();
 
-    uint32_t it{0};
-    for (auto &set : input_data)
     {
-        if (set.input.size() != this->input_size)
-            throw std::invalid_argument(std::string("Invalid input pattern size at: ") + std::to_string(it + 1));
+        uint32_t it{0};
+        for (auto &set : input_data)
+        {
+            if (set.input.size() != this->input_size)
+                throw std::invalid_argument(std::string("Invalid input pattern size at: ") + std::to_string(it + 1));
 
-        if (set.output.size() != this->output_size)
-            
-        it++;
+            if (set.output.size() != this->output_size)
+                it++;
+        }
     }
-    
 
     //Assign given parameters
     this->input_data = input_data;
@@ -208,13 +255,50 @@ Net::Net(pattern_set &input_data, std::array<double,3> subsets_ratio)
     //Verify subsets_ratio
     {
         double tmp = 0;
-        for(auto &value: subsets_ratio)
+        for (auto &value : subsets_ratio)
             tmp += value;
-        if(tmp != 1)
+        if (tmp != 1)
             throw std::invalid_argument(std::string("Sum of subsets ratio is not equal 1"));
     }
 
     this->subsets_ratio = subsets_ratio;
+
+    this->train_set = std::vector<uint32_t>(static_cast<uint32_t>(ceil(this->subsets_ratio.front() * input_data.size())));
+    this->validation_set = std::vector<uint32_t>(static_cast<uint32_t>(ceil(this->subsets_ratio.at(1) * input_data.size())));
+    this->test_set = std::vector<uint32_t>(static_cast<uint32_t>(floor(this->subsets_ratio.back() * input_data.size())));
+
+    if (!((train_set.size() + validation_set.size() + test_set.size()) == input_data.size()))
+        throw std::invalid_argument(std::string("I do math wrong ;("));
+
+    //calculate distributive of classes
+    //for my case i use just one output value
+    //1st class is -1.0
+    //2 class is 0.0
+    //3 class is 1.0
+    this->class_indexes = std::map<double, std::vector<uint32_t>>();
+    this->classes_values = data_row();
+
+    {
+        uint32_t it{0};
+        for (auto &value : this->input_data)
+        {
+            //Class representation
+            double _value = value.output.front();
+
+            //add value to classes_indexs
+            {
+                auto class_it = this->class_indexes.find(_value);
+                if (class_it != this->class_indexes.end())
+                    class_it->second.push_back(it);
+                else
+                {
+                    this->class_indexes.insert(std::make_pair(_value, std::vector<uint32_t>(1, it)));
+                    this->classes_values.push_back(_value);
+                }
+            }
+            it++;
+        }
+    }
 }
 
 Net::~Net() {}

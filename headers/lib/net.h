@@ -31,10 +31,21 @@ class Net
     double SSE_previous;
 
     /**
-     * Computes delta for each layer
-     * @arg index at input_data vector
+     * Subsets
      */
-    void get_delta(uint32_t sample_number);
+    std::vector<uint32_t> train_set;
+    std::vector<uint32_t> validation_set; 
+    std::vector<uint32_t> test_set;
+
+    /**
+     * Class indexes, makes information about distributive
+     */
+    std::map<double,std::vector<uint32_t>> class_indexes;
+
+    /**
+     * Classes value
+     */
+    data_row classes_values;
 
 public:
 
@@ -92,7 +103,7 @@ public:
      * Calculate delta for each neuron
      * @arg sample_number - index of sample in input_data vector
      */
-    void get_delta(uint32_t sample_number)
+    void get_delta(uint32_t sample_number);
 
     /** 
      * Setup internal vectors according to net properties
