@@ -65,51 +65,21 @@ void Net::train(double max_epoch, double error_goal)
  * https://en.wikipedia.org/wiki/Training,_validation,_and_test_sets
  */
 
-    //shuffle values to all subsets
+    //shuffle values
     {
         std::random_device rd;
         std::mt19937 g(rd());
+        
+        std::shuffle(this->indexes.begin(),this->indexes.end(),g);
 
-        //Training set:
-        {
-            std::map<double, uint32_t> class_occurences;
-            //First is class, second: distr of class in subset
-            std::map<double, uint32_t> class_distr;
+        for (uint32_t i{0}; i < train_set.size(); i++)
+            this->train_set[i] = this->indexes[i];
 
-            for (auto &cls : this->class_indexes)
-            {
-                class_distr.insert(std::make_pair(cls.first,
-                                                  static_cast<uint32_t>(
-                                                      floor(train_set.size() *
-                                                            (static_cast<double>(cls.second.size()) / this->input_data.size())))));
-            }
+        for (uint32_t i{0}; i < validation_set.size(); i++)
+            this->validation_set[i] = this->indexes[train_set.size() + i];
 
-            for (uint32_t i{0}; i < train_set.size(); i++)
-            {
-                bool value_set;
-                while (true)
-                {
-                    uint32_t class_id = std::round(random_value(rand_range(0.0, (double)this->classes_values.size())));
-                    if (class_distr[this->classes_values[class_id]] >= class_occurences[this->classes_values[class_id]])
-                    {
-                        for (uint32_t x{0}; x < tmp_indexes.size(); x++)
-                        {
-                            auto &index = tmp_indexes[x];
-                            if (index.first == this->classes_values[class_id])
-                            {
-                                train_set[i] = index.second;
-                                class_occurences[this->classes_values[class_id]] += 1;
-                                tmp_indexes.erase(tmp_indexes.begin() + x);
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        std::cout << "DDD";
+        for (uint32_t i{0}; i < test_set.size(); i++)
+            this->test_set[i] = this->indexes[validation_set.size() + train_set.size() + i];
     }
 
     for (uint32_t epoch{0}; epoch < max_epoch; epoch++)
@@ -270,35 +240,8 @@ Net::Net(pattern_set &input_data, std::array<double, 3> subsets_ratio)
     if (!((train_set.size() + validation_set.size() + test_set.size()) == input_data.size()))
         throw std::invalid_argument(std::string("I do math wrong ;("));
 
-    //calculate distributive of classes
-    //for my case i use just one output value
-    //1st class is -1.0
-    //2 class is 0.0
-    //3 class is 1.0
-    this->class_indexes = std::map<double, std::vector<uint32_t>>();
-    this->classes_values = data_row();
-
-    {
-        uint32_t it{0};
-        for (auto &value : this->input_data)
-        {
-            //Class representation
-            double _value = value.output.front();
-
-            //add value to classes_indexs
-            {
-                auto class_it = this->class_indexes.find(_value);
-                if (class_it != this->class_indexes.end())
-                    class_it->second.push_back(it);
-                else
-                {
-                    this->class_indexes.insert(std::make_pair(_value, std::vector<uint32_t>(1, it)));
-                    this->classes_values.push_back(_value);
-                }
-            }
-            it++;
-        }
-    }
+    for (uint32_t i{0}; i < input_data.size(); i++)
+        this->indexes.push_back(i);
 }
 
 Net::~Net() {}

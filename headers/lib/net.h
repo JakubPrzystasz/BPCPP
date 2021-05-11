@@ -38,14 +38,9 @@ class Net
     std::vector<uint32_t> test_set;
 
     /**
-     * Class indexes, makes information about distributive
+     *
      */
-    std::map<double,std::vector<uint32_t>> class_indexes;
-
-    /**
-     * Classes value
-     */
-    data_row classes_values;
+    std::vector<uint32_t> indexes;
 
 public:
 
