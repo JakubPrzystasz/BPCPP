@@ -24,6 +24,62 @@ typedef std::vector<Pattern> pattern_set;
 typedef std::pair<double, double> rand_range;
 typedef double (*func_ptr)(double, double *);
 
+
+/**
+ * Returns random value in given range
+ * @arg range - pair of double - first is min, second is max 
+ */
+double random_value(rand_range range);
+
+/**
+ * Activation functions and its derivatives of non-linear block of neuron
+ */
+namespace ActivationFunction
+{
+	inline double __normalize(double value)
+	{
+		if (std::isinf(value))
+		{
+			if (value > 0.0)
+				value = std::numeric_limits<double>::max();
+			else
+				value = std::numeric_limits<double>::min();
+		}
+		return value;
+	}
+
+	/**
+	 * Unipolar neuron activation function - as parameter it takes array of one element (Beta constant)
+	 */
+	double unipolar(double input, double *params);
+
+	/**
+	 * Unipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
+	 */
+	double unipolar_derivative(double input, double *params);
+
+	/**
+	 * Bipolar neuron activation function - as parameter it takes array of one element (Beta constant)
+	 */
+	double bipolar(double input, double *params);
+
+	/**
+	 * Bipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
+	 */
+	double bipolar_derivative(double input, double *params);
+
+	/**
+	 * Linear neuron activation 
+	 */
+	double purelin(double input, double *params);
+
+	/**
+	 * Linear neuron activation derivative
+	 */
+	double purelin_derivative(double input, double *params);
+};
+
+
 struct Pattern
 {
     /**
@@ -95,6 +151,16 @@ struct LearnParams
     rand_range bias_range;
 
     /**
+     * Pointer to activation function
+     */
+    func_ptr activation;
+
+    /**
+     * Pointer to derivative of activation function
+     */
+    func_ptr derivative;
+
+    /**
 		 * Default constructor
 		 * sets all values to default
 		 */
@@ -118,7 +184,8 @@ struct LearnParams
 
         this->weights_range = std::make_pair(-1.0, 1.0);
         this->bias_range = std::make_pair(-1.0, 1.0);
+
+        this->activation = ActivationFunction::bipolar;
+        this->derivative = ActivationFunction::bipolar_derivative;
     };
 };
-
-double random_value(rand_range &range);

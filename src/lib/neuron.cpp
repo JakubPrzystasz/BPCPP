@@ -1,6 +1,6 @@
 #include "neuron.h"
 
-double random_value(rand_range &range)
+double random_value(rand_range range)
 {
     std::mt19937_64 rng;
     uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -48,9 +48,9 @@ namespace ActivationFunction
     }
 };
 
-Neuron::Neuron(uint32_t inputs, LearnParams params)
+Neuron::Neuron(uint32_t inputs, LearnParams params): batch(inputs)
 {
-    if(!batch_size)
+    if(!params.batch_size)
         throw std::invalid_argument(std::string("Batch size can not be 0"));
 
     this->learn_parameters = params;
@@ -67,8 +67,6 @@ Neuron::Neuron(uint32_t inputs, LearnParams params)
 
     this->bias = random_value(this->learn_parameters.bias_range);
 
-    //Initialize batch vector
-    this->batch = Batch(inputs);
     //Weight delta for momentum method
     this->weights_deltas = data_set(this->learn_parameters.momentum_delta_vsize);
     for(auto &vec: this->weights_deltas)

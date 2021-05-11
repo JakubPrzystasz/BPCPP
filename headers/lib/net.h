@@ -73,11 +73,6 @@ public:
      */
     std::vector<Layer> layers;
 
-    /**
-     * Feed network with sample
-     * just gets output value of each neuron
-     */
-    void feed(uint32_t sample_number);
 
     /**
      * Trains network
@@ -86,6 +81,25 @@ public:
      */
     void train(double max_epoch = 1000, double error_goal = 0);
 
+    /**
+     * Feed network with sample
+     * just gets output value of each neuron
+     * @arg sample_number - index of sample in input_data vector
+    */
+    void feed(uint32_t sample_number);
+
+    /**
+     * Calculate delta for each neuron
+     * @arg sample_number - index of sample in input_data vector
+     */
+    void get_delta(uint32_t sample_number)
+
+    /** 
+     * Setup internal vectors according to net properties
+     * @arg hidden_layers - vector of sizes of hidden layers
+     * @arg params - blueprint for each neuron 
+     */
+    void setup(std::vector<uint32_t> hidden_layers, LearnParams params);
 
     /**
      *  Constructor of neural network
@@ -95,12 +109,6 @@ public:
      *  @arg subsets_ratio - Percentage representation of training, validation, and test set
      */
     Net(pattern_set &input_data, std::array<double,3> subsets_ratio);
-
-
-    /**
-     * Setup internal vectors according to net properties
-     */
-    void setup(std::vector<uint32_t> hidden_layers, LearnParams params);
 
     ~Net();
 };
