@@ -34,7 +34,6 @@ class Net
      * Subsets
      */
     std::vector<uint32_t> train_set;
-    std::vector<uint32_t> validation_set; 
     std::vector<uint32_t> test_set;
 
     /**
@@ -59,10 +58,10 @@ public:
     LearnParams learn_parameters;
 
     /**
-     * Percentage representation of training, validation, and test set
+     * Percentage representation of training, and test set
      * Sum of values in array must be equal 1
      */
-    std::array<double,3> subsets_ratio;
+    std::array<double,2> subsets_ratio;
 
     /**
      * Sum squared error - value computed and the end of each epoch
@@ -79,13 +78,19 @@ public:
      */
     std::vector<Layer> layers;
 
+    /**
+     * Error ratio
+     */
+    double error_ratio;
+
 
     /**
      * Trains network
      * @arg max_epoch - maximum number of training epochs
      * @arg error_goal - when SSE is less or equal error goal, stops training 
+     * @arg return - LearningOutput
      */
-    void train(double max_epoch = 1000, double error_goal = 0);
+    LearnOutput train(double max_epoch = 1000, double error_goal = 0);
 
     /**
      * Feed network with sample
@@ -99,6 +104,18 @@ public:
      * @arg sample_number - index of sample in input_data vector
      */
     void get_delta(uint32_t sample_number);
+
+    /**
+     * Calculates SSE, and MSE
+     * @arg sample_number - number of sample in input_data vector
+     */
+    void get_cost(uint32_t sample_number);
+
+    /**
+     * If classification succeeds, returns true otherwise false
+     * @arg sample_number - number of sample in input_data vector
+     */
+    bool get_classification_succes(uint32_t sample_number);
 
     /** 
      * Setup internal vectors according to net properties
@@ -114,7 +131,7 @@ public:
      *  Each call of train makes new sets
      *  @arg subsets_ratio - Percentage representation of training, validation, and test set
      */
-    Net(pattern_set &input_data, std::array<double,3> subsets_ratio);
+    Net(pattern_set &input_data, std::array<double,2> subsets_ratio);
 
     ~Net();
 };

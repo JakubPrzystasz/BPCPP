@@ -55,45 +55,80 @@ void Net::read_file(std::string filename, pattern_set &input_data)
     }
 }
 
-void Net::train(double max_epoch, double error_goal)
+LearnOutput Net::train(double max_epoch, double error_goal)
 {
     /**
- * 
- * Make vector of indexes for trainig, validate, and test sets
- * After each epoch make test
- * after tarining make validation
- * https://en.wikipedia.org/wiki/Training,_validation,_and_test_sets
- */
+     * 
+     * Make vector of indexes for trainig, validate, and test sets
+     * After each epoch make test
+     * after tarining make validation
+     * https://en.wikipedia.org/wiki/Training,_validation,_and_test_sets
+     */
+
+    LearnOutput out;
 
     //shuffle values
     {
         std::random_device rd;
         std::mt19937 g(rd());
-        
-        std::shuffle(this->indexes.begin(),this->indexes.end(),g);
+
+        std::shuffle(this->indexes.begin(), this->indexes.end(), g);
 
         for (uint32_t i{0}; i < train_set.size(); i++)
             this->train_set[i] = this->indexes[i];
 
-        for (uint32_t i{0}; i < validation_set.size(); i++)
-            this->validation_set[i] = this->indexes[train_set.size() + i];
-
         for (uint32_t i{0}; i < test_set.size(); i++)
-            this->test_set[i] = this->indexes[validation_set.size() + train_set.size() + i];
+            this->test_set[i] = this->indexes[train_set.size() + i];
     }
+
+    std::vector<bool> classification_test = std::vector<bool>(test_set.size(), 0);
+    std::vector<bool> classification_train = std::vector<bool>(train_set.size(), 0);
+    double classification_accuracy{0};
 
     for (uint32_t epoch{0}; epoch < max_epoch; epoch++)
     {
-        for (this->batch_it = 0; this->batch_it < input_data.size(); this->batch_it++)
+        for (this->batch_it = 0; this->batch_it < train_set.size(); this->batch_it++)
         {
+            uint32_t index = train_set[batch_it];
             //Feed network with data
-            this->feed(batch_it);
-            //Get delta and SSE
-            this->get_delta(batch_it);
+            this->feed(index);
+
+            //Compute backprop delta for each neuron
+            this->get_delta(index);
+
+            //Get cost
+            this->get_cost(index);
+
+            out.train_set_SSE.push_back(this->SSE);
+            out.train_set_MSE.push_back(this->MSE);
+            classification_train[batch_it] = this->get_classification_succes(index);
+        }
+        
+        classification_accuracy = 0;
+
+        for(auto value: classification_train)
+            classification_accuracy += static_cast<double>(value);
+
+        out.train_set_accuracy.push_back(classification_accuracy / static_cast<double>(train_set.size()));
+
+
+        //Test set:
+        for (uint32_t i = {0}; i < test_set.size(); i++)
+        {
+            uint32_t index = test_set[i];
+            this->feed(index);
+            this->get_cost(index);
+            out.test_set_SSE.push_back(this->SSE);
+            out.test_set_MSE.push_back(this->MSE);
+            classification_test[i] = this->get_classification_succes(index);
         }
 
-        // if ((epoch % 10) == 0)
-        //     std::cout << "Epoch: " << epoch << "  SSE: " << this->SSE << "  MSE:" << this->SSE / static_cast<double>(input_data.size()) << std::endl;
+        classification_accuracy = 0;
+
+        for(auto value: classification_train)
+            classification_accuracy += static_cast<double>(value);
+
+        out.test_set_accuracy.push_back(classification_accuracy / static_cast<double>(train_set.size()));
 
         // if (this->SSE <= error_goal)
         //     break;
@@ -110,6 +145,8 @@ void Net::train(double max_epoch, double error_goal)
         // this->SSE_previous = this->SSE;
         // this->SSE = 0;
     }
+
+    return LearnOutput();
 }
 
 void Net::feed(uint32_t sample_number)
@@ -174,6 +211,34 @@ void Net::get_delta(uint32_t sample_number)
     }
 }
 
+void Net::get_cost(uint32_t sample_number)
+{
+    double error{0};
+    auto &target = this->input_data[sample_number].output;
+    auto &layer = this->layers.back();
+
+    for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+        error += (target[neuron_it] - layer.neurons[neuron_it].output) * (target[neuron_it] - layer.neurons[neuron_it].output);
+
+    this->SSE += (error / static_cast<double>(layer.neurons.size()));
+}
+
+bool Net::get_classification_succes(uint32_t sample_number)
+{
+    //TODO:
+    //I've got 3 classes in range -1.0 - 1.0
+    //For general purpose it needs to be changed
+    double out_value = this->layers.back().neurons.front().output;
+    double sample_output = this->input_data[sample_number].output.front();
+    if (out_value > 0.5 && sample_output == 1.0)
+        return true;
+    if (out_value < -0.5 && sample_output == -1.0)
+        return true;
+    if (out_value >= -0.5 && out_value <= 0.5 && sample_output == 0.0)
+        return true;
+    return false;
+}
+
 void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
 {
     this->learn_parameters = params;
@@ -196,7 +261,7 @@ void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), params));
 }
 
-Net::Net(pattern_set &input_data, std::array<double, 3> subsets_ratio)
+Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)
 {
     /*
         Validate input data
@@ -234,14 +299,16 @@ Net::Net(pattern_set &input_data, std::array<double, 3> subsets_ratio)
     this->subsets_ratio = subsets_ratio;
 
     this->train_set = std::vector<uint32_t>(static_cast<uint32_t>(ceil(this->subsets_ratio.front() * input_data.size())));
-    this->validation_set = std::vector<uint32_t>(static_cast<uint32_t>(ceil(this->subsets_ratio.at(1) * input_data.size())));
     this->test_set = std::vector<uint32_t>(static_cast<uint32_t>(floor(this->subsets_ratio.back() * input_data.size())));
 
-    if (!((train_set.size() + validation_set.size() + test_set.size()) == input_data.size()))
+    if (!((train_set.size() + test_set.size()) == input_data.size()))
         throw std::invalid_argument(std::string("I do math wrong ;("));
 
     for (uint32_t i{0}; i < input_data.size(); i++)
         this->indexes.push_back(i);
+
+    //Mr.Miłosz told me that will be fine
+    this->error_ratio = 1.05;
 }
 
 Net::~Net() {}

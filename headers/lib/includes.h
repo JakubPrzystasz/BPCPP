@@ -81,6 +81,10 @@ namespace ActivationFunction
 	double purelin_derivative(double input, double *params);
 };
 
+enum class TrainResult{
+    MaxEpochReached = 0,
+    ErrorGoalReached = 1,
+};
 
 struct Pattern
 {
@@ -96,7 +100,7 @@ struct Pattern
 };
 
 /**
-    *  Learning parameters of neuron/layer/network
+    *Learning parameters of neuron/layer/network
 */
 struct LearnParams
 {
@@ -191,3 +195,22 @@ struct LearnParams
         this->derivative = ActivationFunction::bipolar_derivative;
     };
 };
+
+/**
+    *Learning output, for future analisys 
+ */
+struct LearnOutput{
+    
+    data_row train_set_SSE;
+    data_row train_set_MSE;
+    //Percentage accuracy of classification
+    data_row train_set_accuracy;
+
+    data_row test_set_SSE;
+    data_row test_set_MSE;
+    //Percentage accuracy of classification
+    data_row test_set_accuracy;
+
+    TrainResult result;
+};
+

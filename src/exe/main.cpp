@@ -6,12 +6,12 @@ int main()
     pattern_set input;
     Net::read_file(std::string("INPUT_DATA.txt"), input);
 
-    auto myNet = Net(input, {0.8, 0.1, 0.1});
+    auto myNet = Net(input, {0.8, 0.2});
 
     LearnParams netParams = LearnParams();
 
     myNet.setup({6, 3}, netParams);
-    myNet.train();
+    myNet.train(100);
 
 
     // data_row x, target_plot, output_plot;
