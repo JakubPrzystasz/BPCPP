@@ -36,8 +36,6 @@ class Net
      */
     std::vector<uint32_t> indexes;
 
-
-
     uint32_t batch_it;
 
     void update_learning_rate(LearningRateUpdate value);

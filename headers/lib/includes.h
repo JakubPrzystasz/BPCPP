@@ -160,6 +160,11 @@ struct LearnParams
     uint32_t momentum_delta_vsize;
 
     /**
+     * Momentum rate
+     */
+    double momentum_rate;
+
+    /**
 		 * Beta parameter used in activation function
 		 */
     double beta_param;

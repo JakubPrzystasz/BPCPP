@@ -20,6 +20,9 @@ struct Neuron
 
 	data_set weights_deltas;
 
+	data_row weight_update;
+	double bias_update;
+
 	/**
 	 * Output of activation function
 	 */
@@ -64,10 +67,17 @@ struct Neuron
 	 * Updates weights computed in batch
 	 */
 	void update_weights()
-	{
-		for (uint32_t it{0}; it < this->weights.size(); it++)
-			this->weights[it] += std::accumulate(batch.weights_deltas[it].begin(), batch.weights_deltas[it].end(), 0.0) / (double)(this->learn_parameters.batch_size);
-		this->bias += std::accumulate(this->batch.bias_deltas.begin(), this->batch.bias_deltas.end(), 0.0) / (double)((this->learn_parameters.batch_size));
+	{	
+		double tmp;
+		for (uint32_t it{0}; it < this->weights.size(); it++){
+			tmp = std::accumulate(batch.weights_deltas[it].begin(), batch.weights_deltas[it].end(), 0.0) / static_cast<double>(this->learn_parameters.batch_size); 
+			this->weight_update[it] += tmp;
+			this->weights[it] += tmp;
+		}
+
+		tmp = std::accumulate(this->batch.bias_deltas.begin(), this->batch.bias_deltas.end(), 0.0) / static_cast<double>(this->learn_parameters.batch_size);
+		this->bias_update += tmp;
+		this->bias += tmp; 
 	}
 
 	/**
