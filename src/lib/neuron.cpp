@@ -24,12 +24,7 @@ namespace ActivationFunction
 
     double bipolar(double input, double *params)
     {
-        double ret = __normalize(tanh((*params) * input));
-        if (ret < -1.0)
-            return -1.0;
-        if (ret > 1.0)
-            return 1.0;
-        return ret;
+        return __normalize(tanh((*params) * input));
     }
 
     double bipolar_derivative(double input, double *params)
@@ -48,7 +43,7 @@ namespace ActivationFunction
     }
 };
 
-Neuron::Neuron(uint32_t inputs, LearnParams params): batch(inputs)
+Neuron::Neuron(uint32_t inputs, LearnParams params): batch(inputs,params.batch_size)
 {
     if(!params.batch_size)
         throw std::invalid_argument(std::string("Batch size can not be 0"));
@@ -60,17 +55,20 @@ Neuron::Neuron(uint32_t inputs, LearnParams params): batch(inputs)
     this->derivative = this->learn_parameters.derivative;
 
     //Initialize weights and bias with random values
-    this->weights = data_row(inputs);
+    this->weights = data_row(inputs,0.5);
+    //this->weights = data_row(inputs);
 
-    for (auto &weight : this->weights)
-        weight = random_value(this->learn_parameters.weights_range);
 
-    this->bias = random_value(this->learn_parameters.bias_range);
+    //TODO:
+    // for (auto &weight : this->weights)
+    //     weight = random_value(this->learn_parameters.weights_range);
+
+    this->bias = 0.5;
+    //this->bias = random_value(this->learn_parameters.bias_range);
 
     //Weight delta for momentum method
-    this->weights_deltas = data_set(this->learn_parameters.momentum_delta_vsize);
-    for(auto &vec: this->weights_deltas)
-        vec = data_row(inputs);
+    this->weights_deltas = data_set(inputs,data_row(this->learn_parameters.momentum_delta_vsize,0));
+
 }
 
 Neuron::~Neuron() {}

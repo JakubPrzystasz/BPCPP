@@ -13,19 +13,20 @@
 #include <random>
 #include <chrono>
 #include <fstream>
+#include <numeric>
 #include <map>
 
 struct Neuron;
 struct Layer;
 struct Pattern;
 struct LearnParams;
+struct Batch;
 class Net;
 typedef std::vector<double> data_row;
 typedef std::vector<data_row> data_set;
 typedef std::vector<Pattern> pattern_set;
 typedef std::pair<double, double> rand_range;
 typedef double (*func_ptr)(double, double *);
-
 
 /**
  * Returns random value in given range
@@ -34,54 +35,71 @@ typedef double (*func_ptr)(double, double *);
 double random_value(rand_range range);
 
 /**
+    * Store weights and bias updates of each pattern in batch
+	* Each element in bias_deltas represents delta of bias from one train example
+	* Each vector in data_set vector of deltas for one weight
+*/
+struct Batch
+{
+    data_row bias_deltas;
+    data_set weights_deltas;
+    Batch(uint32_t weights_count, uint32_t batch_size)
+    {
+        weights_deltas = data_set(weights_count, data_row(batch_size, 0));
+        bias_deltas = data_row(batch_size, 0);
+    }
+};
+
+/**
  * Activation functions and its derivatives of non-linear block of neuron
  */
 namespace ActivationFunction
 {
-	inline double __normalize(double value)
-	{
-		if (std::isinf(value))
-		{
-			if (value > 0.0)
-				value = std::numeric_limits<double>::max();
-			else
-				value = std::numeric_limits<double>::min();
-		}
-		return value;
-	}
+    inline double __normalize(double value)
+    {
+        if (std::isinf(value))
+        {
+            if (value > 0.0)
+                value = std::numeric_limits<double>::max();
+            else
+                value = std::numeric_limits<double>::min();
+        }
+        return value;
+    }
 
-	/**
+    /**
 	 * Unipolar neuron activation function - as parameter it takes array of one element (Beta constant)
 	 */
-	double unipolar(double input, double *params);
+    double unipolar(double input, double *params);
 
-	/**
+    /**
 	 * Unipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
 	 */
-	double unipolar_derivative(double input, double *params);
+    double unipolar_derivative(double input, double *params);
 
-	/**
+    /**
 	 * Bipolar neuron activation function - as parameter it takes array of one element (Beta constant)
 	 */
-	double bipolar(double input, double *params);
+    double bipolar(double input, double *params);
 
-	/**
+    /**
 	 * Bipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
 	 */
-	double bipolar_derivative(double input, double *params);
+    double bipolar_derivative(double input, double *params);
 
-	/**
+    /**
 	 * Linear neuron activation 
 	 */
-	double purelin(double input, double *params);
+    double purelin(double input, double *params);
 
-	/**
+    /**
 	 * Linear neuron activation derivative
 	 */
-	double purelin_derivative(double input, double *params);
+    double purelin_derivative(double input, double *params);
 };
 
-enum class TrainResult{
+enum class TrainResult
+{
     MaxEpochReached = 0,
     ErrorGoalReached = 1,
 };
@@ -199,8 +217,9 @@ struct LearnParams
 /**
     *Learning output, for future analisys 
  */
-struct LearnOutput{
-    
+struct LearnOutput
+{
+
     data_row train_set_SSE;
     data_row train_set_MSE;
     //Percentage accuracy of classification
@@ -213,4 +232,3 @@ struct LearnOutput{
 
     TrainResult result;
 };
-

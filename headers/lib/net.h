@@ -4,6 +4,11 @@
 
 class Net
 {
+    enum class LearningRateUpdate{
+        Increase,
+        Decrease,
+    };
+
 
     /**
      * Size of input layer
@@ -21,16 +26,6 @@ class Net
     pattern_set input_data;
 
     /**
-     * Iterator over values in single batch
-     */
-    uint32_t batch_it;
-
-    /**
-     * Previous value of SSE - for adaptive learning rate
-     */
-    double SSE_previous;
-
-    /**
      * Subsets
      */
     std::vector<uint32_t> train_set;
@@ -40,6 +35,12 @@ class Net
      *
      */
     std::vector<uint32_t> indexes;
+
+
+
+    uint32_t batch_it;
+
+    void update_learning_rate(LearningRateUpdate value);
 
 public:
 
@@ -67,11 +68,6 @@ public:
      * Sum squared error - value computed and the end of each epoch
      */
     double SSE;
-
-    /**
-     * Mean square error - mean of SSE/size of set
-     */
-    double MSE;
     
     /**
      * Contains input, hidden, and output layers
@@ -106,10 +102,21 @@ public:
     void get_delta(uint32_t sample_number);
 
     /**
-     * Calculates SSE, and MSE
+     * Calculates error
      * @arg sample_number - number of sample in input_data vector
      */
-    void get_cost(uint32_t sample_number);
+    double get_cost(uint32_t sample_number);
+
+    /**
+     * Updates weights for all neurons in net
+     */
+    void update_weights();
+
+    /**
+     * Calculate new weights
+     * @arg sample_number - number of smaple in input_data vector
+     */
+    void learn(uint32_t sample_number);
 
     /**
      * If classification succeeds, returns true otherwise false

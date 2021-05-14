@@ -1,5 +1,24 @@
 #include "net.h"
 
+void Net::update_learning_rate(LearningRateUpdate value)
+{
+    for (uint32_t i{1}; i < this->layers.size(); i++)
+    {
+        for (auto &neuron : this->layers[i].neurons)
+        {
+            switch (value)
+            {
+            case LearningRateUpdate::Increase:
+                this->learn_parameters.learning_rate *= this->learn_parameters.learning_accelerating_constans;
+                break;
+            default:
+                this->learn_parameters.learning_rate *= this->learn_parameters.learning_decelerating_constans;
+                break;
+            };
+        }
+    }
+}
+
 void Net::read_file(std::string filename, pattern_set &input_data)
 {
     std::ifstream input_file(filename);
@@ -57,22 +76,13 @@ void Net::read_file(std::string filename, pattern_set &input_data)
 
 LearnOutput Net::train(double max_epoch, double error_goal)
 {
-    /**
-     * 
-     * Make vector of indexes for trainig, validate, and test sets
-     * After each epoch make test
-     * after tarining make validation
-     * https://en.wikipedia.org/wiki/Training,_validation,_and_test_sets
-     */
-
     LearnOutput out;
-
     //shuffle values
     {
         std::random_device rd;
         std::mt19937 g(rd());
-
-        std::shuffle(this->indexes.begin(), this->indexes.end(), g);
+        //TODO:
+        //std::shuffle(this->indexes.begin(), this->indexes.end(), g);
 
         for (uint32_t i{0}; i < train_set.size(); i++)
             this->train_set[i] = this->indexes[i];
@@ -83,70 +93,73 @@ LearnOutput Net::train(double max_epoch, double error_goal)
 
     std::vector<bool> classification_test = std::vector<bool>(test_set.size(), 0);
     std::vector<bool> classification_train = std::vector<bool>(train_set.size(), 0);
+
     double classification_accuracy{0};
 
-    for (uint32_t epoch{0}; epoch < max_epoch; epoch++)
+    uint32_t epoch{0};
+
+    for (; epoch < max_epoch; epoch++)
     {
-        for (this->batch_it = 0; this->batch_it < train_set.size(); this->batch_it++)
+        this->batch_it = 1;
+        this->SSE = 0;
+        for (uint32_t it{0}; it < train_set.size(); it++)
         {
-            uint32_t index = train_set[batch_it];
-            //Feed network with data
-            this->feed(index);
+            batch_it++;
+            uint32_t index = train_set[it];
 
-            //Compute backprop delta for each neuron
-            this->get_delta(index);
+            //Learn network
 
-            //Get cost
-            this->get_cost(index);
+            //TODO:
+            this->learn(it);
 
-            out.train_set_SSE.push_back(this->SSE);
-            out.train_set_MSE.push_back(this->MSE);
-            classification_train[batch_it] = this->get_classification_succes(index);
+            //if batch ends - update weights
+            if ((this->batch_it % this->learn_parameters.batch_size) == 0)
+            {
+                this->update_weights();
+                this->batch_it = 1;
+            }
+
+            classification_train[it] = this->get_classification_succes(index);
         }
-        
+        //close open batch
+        if (this->batch_it > 1)
+            this->update_weights();
+
+
+        out.train_set_SSE.push_back(this->SSE);
+        out.train_set_MSE.push_back(this->SSE / static_cast<double>(train_set.size()));
+
+
         classification_accuracy = 0;
-
-        for(auto value: classification_train)
+        for (auto value : classification_train)
             classification_accuracy += static_cast<double>(value);
-
         out.train_set_accuracy.push_back(classification_accuracy / static_cast<double>(train_set.size()));
 
-
         //Test set:
-        for (uint32_t i = {0}; i < test_set.size(); i++)
+        for (uint32_t it = {0}; it < test_set.size(); it++)
         {
-            uint32_t index = test_set[i];
+            uint32_t index = test_set[it];
             this->feed(index);
             this->get_cost(index);
-            out.test_set_SSE.push_back(this->SSE);
-            out.test_set_MSE.push_back(this->MSE);
-            classification_test[i] = this->get_classification_succes(index);
+            //TODO:
+            //out.test_set_SSE.push_back(this->SSE);
+            classification_test[it] = this->get_classification_succes(index);
         }
-
         classification_accuracy = 0;
-
-        for(auto value: classification_train)
+        for (auto value : classification_train)
             classification_accuracy += static_cast<double>(value);
-
         out.test_set_accuracy.push_back(classification_accuracy / static_cast<double>(train_set.size()));
 
-        // if (this->SSE <= error_goal)
-        //     break;
-
-        // //Adaptive learning rate:
-        // //uses bold driver method
-        // if (this->learning_accelerating_constans > 0 && this->learning_decelerating_constans > 0)
-        // {
-        //     if (this->SSE_previous > this->SSE)
-        //         this->learning_rate = this->learning_rate * this->learning_accelerating_constans;
-        //     else
-        //         this->learning_rate = this->learning_rate * this->learning_decelerating_constans;
-        // }
-        // this->SSE_previous = this->SSE;
-        // this->SSE = 0;
+        if (this->SSE <= error_goal)
+            break;
     }
 
-    return LearnOutput();
+    if (epoch == max_epoch)
+        out.result = TrainResult::MaxEpochReached;
+    else
+        out.result = TrainResult::ErrorGoalReached;
+
+    return out;
 }
 
 void Net::feed(uint32_t sample_number)
@@ -210,17 +223,124 @@ void Net::get_delta(uint32_t sample_number)
         }
     }
 }
+/// SPLIT GETTING OUTPUT FROM GETTING DERIVATIVE!!!!!
 
-void Net::get_cost(uint32_t sample_number)
+double Net::get_cost(uint32_t sample_number)
 {
-    double error{0};
+    double error{0}, tmp;
     auto &target = this->input_data[sample_number].output;
     auto &layer = this->layers.back();
 
     for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
-        error += (target[neuron_it] - layer.neurons[neuron_it].output) * (target[neuron_it] - layer.neurons[neuron_it].output);
+    {
+        tmp = (target[neuron_it] - layer.neurons[neuron_it].output);
+        error += tmp * tmp;
+    }
+    return error / static_cast<double>(layer.neurons.size());
+}
 
-    this->SSE += (error / static_cast<double>(layer.neurons.size()));
+void Net::update_weights()
+{
+    for (uint32_t i{1}; i < this->layers.size(); i++)
+    {
+        for (auto &neuron : this->layers[i].neurons)
+            neuron.update_weights();
+    }
+}
+
+void Net::learn(uint32_t sample_number)
+{
+    uint32_t batch_it = this->batch_it - 2;
+    double error, prev_error;
+
+    this->feed(sample_number);
+
+    prev_error = this->get_cost(sample_number);
+
+    this->get_delta(sample_number);
+
+    ///Calculate new deltas
+    for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+    {
+        auto &layer = this->layers[layer_it];
+        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+        {
+            auto &neuron = layer.neurons[neuron_it];
+
+            double delta = -1.0 * neuron.delta * neuron.learn_parameters.learning_rate;
+
+            neuron.batch.bias_deltas[batch_it] = delta;
+
+            if (this->learn_parameters.momentum_constans > 0)
+            {
+                // for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                // {
+                //     delta_tmp = delta * this->layers[layer_it - 1].neurons[weights_it].output;
+
+                //     neuron.weights[weights_it] += delta_tmp + momentum_constans * neuron.weights_deltas[weights_it];
+
+                //     neuron.weights_deltas[weights_it] = delta_tmp;
+                // }
+            }
+            else
+            {
+                for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                    neuron.batch.weights_deltas[weights_it][batch_it] = delta * this->layers[layer_it - 1].neurons[weights_it].output;
+            }
+        }
+    }
+
+    for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+    {
+        auto &layer = this->layers[layer_it];
+        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+        {
+            auto &neuron = layer.neurons[neuron_it];
+            neuron.bias += neuron.batch.bias_deltas[batch_it];
+            for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                neuron.weights[weights_it] += neuron.batch.weights_deltas[weights_it][batch_it];
+        }
+    }
+
+    this->feed(sample_number);
+    error = this->get_cost(sample_number);
+
+    for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+    {
+        auto &layer = this->layers[layer_it];
+        for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+        {
+            auto &neuron = layer.neurons[neuron_it];
+            neuron.bias -= neuron.batch.bias_deltas[batch_it];
+            for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+                neuron.weights[weights_it] -= neuron.batch.weights_deltas[weights_it][batch_it];
+        }
+    }
+
+    // if (this->learn_parameters.learning_accelerating_constans > 0)
+    // {
+    //     if (error > prev_error * this->error_ratio)
+    //     {
+    //         this->update_learning_rate(LearningRateUpdate::Decrease);
+    //         //discard all deltas:
+    //         for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+    //         {
+    //             auto &layer = this->layers[layer_it];
+    //             for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+    //             {
+    //                 auto &neuron = layer.neurons[neuron_it];
+    //                 neuron.batch.bias_deltas[batch_it] = 0;
+
+    //                 for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
+    //                     neuron.batch.weights_deltas[weights_it][batch_it] = 0;
+    //             }
+    //         }
+    //     }
+    //     else if (error <= prev_error)
+    //         this->update_learning_rate(LearningRateUpdate::Increase);
+    // }
+
+    this->SSE += prev_error;
 }
 
 bool Net::get_classification_succes(uint32_t sample_number)

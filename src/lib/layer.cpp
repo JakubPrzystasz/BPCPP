@@ -6,7 +6,5 @@ Layer::Layer(uint32_t neurons, uint32_t inputs, LearnParams params)
 
     this->inputs = inputs;
 
-    for (uint32_t i{0}; i < neurons; i++)
-        this->neurons.push_back(Neuron(inputs, this->learn_parameters));
-
+    this->neurons = std::vector<Neuron>(neurons, Neuron(inputs, this->learn_parameters));
 };

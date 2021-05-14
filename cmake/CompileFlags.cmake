@@ -7,9 +7,9 @@ if(MSVC)
 	add_definitions("/wd4267 /wd4244")  # ignore silly warnings related to size_t/int and site_t/double conversions
 else()
 	#g++ compile flags
-	set(CMAKE_CXX_FLAGS "-Wall -msse2 -fno-rtti -pipe")
-	set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -fno-rtti -pipe")
-	set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O3 -msse2 -fno-rtti -pipe")
+	set(CMAKE_CXX_FLAGS "-Wall -msse2 -fno-rtti -pipe -std=gnu++17")
+	set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -fno-rtti -pipe -std=gnu++17")
+	set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O3 -msse2 -fno-rtti -pipe -std=gnu++17")
 
 	# set(CMAKE_CXX_FLAGS "-Wall -msse2 -fno-rtti -pipe")
 	# set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -fno-rtti -pipe -Wextra -Werror")

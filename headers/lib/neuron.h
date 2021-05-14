@@ -1,26 +1,13 @@
 #pragma once
 
 #include "includes.h"
+#include <numeric>
 
 /**
  * Implementation of simple neuron,
  */
 struct Neuron
 {
-	/**
-	 * Store weights and bias updates of each pattern in batch
-	 */
-	struct Batch
-	{
-		double bias_deltas;
-		data_row weights_deltas;
-		Batch(uint32_t weights_count)
-		{
-			weights_deltas = data_row(weights_count);
-			bias_deltas = 0;
-		}
-	};
-
 	/**
 	 * Container for learning params
 	 */
@@ -31,9 +18,6 @@ struct Neuron
 	 */
 	Batch batch;
 
-	/**
-	 * Delta of weight update from the last epoch
-	 */
 	data_set weights_deltas;
 
 	/**
@@ -75,6 +59,16 @@ struct Neuron
      * Pointer to activation function derivative
      */
 	func_ptr derivative;
+
+	/**
+	 * Updates weights computed in batch
+	 */
+	void update_weights()
+	{
+		for (uint32_t it{0}; it < this->weights.size(); it++)
+			this->weights[it] += std::accumulate(batch.weights_deltas[it].begin(), batch.weights_deltas[it].end(), 0.0) / (double)(this->learn_parameters.batch_size);
+		this->bias += std::accumulate(this->batch.bias_deltas.begin(), this->batch.bias_deltas.end(), 0.0) / (double)((this->learn_parameters.batch_size));
+	}
 
 	/**
      * @arg inputs - number of neurons in previous layer
