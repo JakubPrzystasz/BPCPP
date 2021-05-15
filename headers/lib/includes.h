@@ -205,7 +205,7 @@ struct LearnParams
 
         this->error_ratio = 1.04;
 
-        this->momentum_constans = 0.90;
+        this->momentum_constans = 0.9;
 
         //Size of vector for weights deltas for each neuron
         //Vector of deltas is necessary for momentum method

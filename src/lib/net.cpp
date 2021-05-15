@@ -91,7 +91,6 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     {
         std::random_device rd;
         std::mt19937 g(rd());
-        //TODO:
         //std::shuffle(this->indexes.begin(), this->indexes.end(), g);
 
         for (uint32_t i{0}; i < train_set.size(); i++)
@@ -104,20 +103,17 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     std::vector<bool> classification_test = std::vector<bool>(test_set.size(), 0);
     std::vector<bool> classification_train = std::vector<bool>(train_set.size(), 0);
 
-    double prev_SSE, error_r, classification_accuracy;
-    uint32_t epoch{0}, decrease_lr;
+    double prev_SSE, error_r, classification_accuracy, test_SSE;
+    uint32_t epoch{0}, index{0};
     for (; epoch < max_epoch; epoch++)
     {
         this->batch_it = 1;
         prev_SSE = this->SSE;
         this->SSE = 0;
         //Make full run over training data
-        //TODO:
-        std::cout << epoch << "  " << prev_SSE << std::endl;
-
         for (uint32_t it{0}; it < train_set.size(); it++)
         {
-            uint32_t index = train_set[it];
+            index = train_set[it];
             this->learn(index);
             //if batch ends - update weights
             if ((this->batch_it % this->learn_parameters.batch_size) == 0)
@@ -175,16 +171,15 @@ LearnOutput Net::train(double max_epoch, double error_goal)
         }
 
         for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-                {
-                    for (auto &neuron : this->layers[layer_it].neurons)
-                    {
-                        neuron.bias_update = 0;
+        {
+            for (auto &neuron : this->layers[layer_it].neurons)
+            {
+                neuron.bias_update = 0;
 
-                        for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
-                            neuron.weight_update[weight_it] = 0;
-                    }
-                }
-        
+                for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
+                    neuron.weight_update[weight_it] = 0;
+            }
+        }
 
         //Stuff for later analisys
         out.train_set_SSE.push_back(this->SSE);
@@ -194,6 +189,22 @@ LearnOutput Net::train(double max_epoch, double error_goal)
         for (auto value : classification_train)
             classification_accuracy += static_cast<double>(value);
         out.train_set_accuracy.push_back(classification_accuracy / static_cast<double>(train_set.size()));
+
+        for (uint32_t it{0}; it < test_set.size(); it++)
+        {
+            index = test_set[it];
+            this->feed(index);
+            test_SSE = this->get_cost(index);
+            classification_test[it] = this->get_classification_succes(index);
+        }
+        out.test_set_SSE.push_back(test_SSE);
+        out.test_set_MSE.push_back(test_SSE / static_cast<double>(train_set.size()));
+        test_SSE = 0;
+
+        classification_accuracy = 0;
+        for (auto value : classification_test)
+            classification_accuracy += static_cast<double>(value);
+        out.test_set_accuracy.push_back(classification_accuracy / static_cast<double>(train_set.size()));
 
         if (this->SSE <= error_goal)
             break;

@@ -134,15 +134,3 @@ public:
 
     ~Net();
 };
-
-/*
-TODO:
-    Input data preparation - make internal vector of indexes of input data set
-    every call of function traingdx suffle 3 sets of input data:
-    train set, validate set, and test set. in default proportion 80,15,5
-    but every set must have each class
-
-    Questions:
-    can i use bigger momentum delta vector?
-    is it ok to use just one method of adaping learning rate, or make experiment with it? 
-*/
