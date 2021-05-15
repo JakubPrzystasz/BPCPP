@@ -2,6 +2,16 @@
 
 void Net::update_learning_rate(LearningRateUpdate value)
 {
+    switch (value)
+    {
+    case LearningRateUpdate::Increase:
+        this->learn_parameters.learning_rate *= this->learn_parameters.learning_accelerating_constans;
+        break;
+    default:
+        this->learn_parameters.learning_rate *= this->learn_parameters.learning_decelerating_constans;
+        break;
+    };
+
     for (uint32_t i{1}; i < this->layers.size(); i++)
     {
         for (auto &neuron : this->layers[i].neurons)
@@ -81,7 +91,8 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     {
         std::random_device rd;
         std::mt19937 g(rd());
-        std::shuffle(this->indexes.begin(), this->indexes.end(), g);
+        //TODO:
+        //std::shuffle(this->indexes.begin(), this->indexes.end(), g);
 
         for (uint32_t i{0}; i < train_set.size(); i++)
             this->train_set[i] = this->indexes[i];
@@ -93,20 +104,15 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     std::vector<bool> classification_test = std::vector<bool>(test_set.size(), 0);
     std::vector<bool> classification_train = std::vector<bool>(train_set.size(), 0);
 
-    double classification_accuracy{0};
-    double prev_SSE;
-    bool decrease_lr = false;
-    uint32_t epoch{0};
-    //Make first run to get SSE for adaptive learning method:
-
-    this->SSE = 10000000000;
-
+    double prev_SSE, error_r, classification_accuracy;
+    uint32_t epoch{0}, decrease_lr;
     for (; epoch < max_epoch; epoch++)
     {
         this->batch_it = 1;
         prev_SSE = this->SSE;
         this->SSE = 0;
         //Make full run over training data
+        //TODO:
         std::cout << epoch << "  " << prev_SSE << std::endl;
 
         for (uint32_t it{0}; it < train_set.size(); it++)
@@ -128,70 +134,57 @@ LearnOutput Net::train(double max_epoch, double error_goal)
         if (this->batch_it > 1)
             this->update_weights();
 
-        //So now do stuff with adaptive learning rate, and momentum deltas
-        if ((this->SSE / prev_SSE) > this->error_ratio)
+        if (epoch)
         {
-            decrease_lr = true;
-            this->update_learning_rate(LearningRateUpdate::Decrease);
-            //discard all deltas:
+            //So now do stuff with adaptive learning rate, and momentum deltas
+            error_r = this->SSE / prev_SSE;
+            if (error_r > this->learn_parameters.error_ratio)
+            {
+                this->update_learning_rate(LearningRateUpdate::Decrease);
+
+                //Clear weight and bias update vectors
+                for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
+                {
+                    for (auto &neuron : this->layers[layer_it].neurons)
+                    {
+                        neuron.bias -= neuron.bias_update;
+                        neuron.bias_update = 0;
+
+                        for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
+                        {
+                            neuron.weights[weight_it] -= neuron.weight_update[weight_it];
+                            neuron.weight_update[weight_it] = 0;
+                        }
+                    }
+                }
+            }
+            else if (error_r < 1)
+                this->update_learning_rate(LearningRateUpdate::Increase);
+
             for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
             {
-                auto &layer = this->layers[layer_it];
-                for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
+                for (auto &neuron : this->layers[layer_it].neurons)
                 {
-                    auto &neuron = layer.neurons[neuron_it];
-                    neuron.bias -= neuron.bias_update;
+                    if (!neuron.learn_parameters.momentum_delta_vsize)
+                        continue;
 
                     for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
-                        neuron.weights[weight_it] -= neuron.weight_update[weight_it];
-                }
-            }
-        }
-        else
-        {
-            decrease_lr = false;
-            this->update_learning_rate(LearningRateUpdate::Increase);
-        }
-
-        if (decrease_lr)
-        {
-            for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-            {
-                for (auto &neuron : this->layers[layer_it].neurons)
-                {
-                    if(!neuron.learn_parameters.momentum_delta_vsize)
-                        continue;
-                    
-                    for(uint32_t weight_it{0};weight_it < neuron.weights.size();weight_it++)
-                        neuron.weights_deltas[weight_it][(epoch+1) % neuron.learn_parameters.momentum_delta_vsize] = 0;
-                }
-            }
-        }
-        else
-        {
-            for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-            {
-                for (auto &neuron : this->layers[layer_it].neurons)
-                {
-                    if(!neuron.learn_parameters.momentum_delta_vsize)
-                        continue;
-                    
-                    for(uint32_t weight_it{0};weight_it < neuron.weights.size();weight_it++)
-                        neuron.weights_deltas[weight_it][(epoch+1) % neuron.learn_parameters.momentum_delta_vsize] = neuron.weight_update[weight_it];
+                        neuron.weights_deltas[weight_it][(epoch + 1) % neuron.learn_parameters.momentum_delta_vsize] = neuron.weight_update[weight_it];
                 }
             }
         }
 
-        //Clear weight and bias update vectors
         for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-        {
-            for (auto &neuron : this->layers[layer_it].neurons)
-            {
-                neuron.bias_update = 0;
-                for (auto &weight : neuron.weight_update)
-                    weight = 0;
-            }
-        }
+                {
+                    for (auto &neuron : this->layers[layer_it].neurons)
+                    {
+                        neuron.bias_update = 0;
+
+                        for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
+                            neuron.weight_update[weight_it] = 0;
+                    }
+                }
+        
 
         //Stuff for later analisys
         out.train_set_SSE.push_back(this->SSE);
@@ -322,8 +315,10 @@ void Net::learn(uint32_t sample_number)
             {
                 //Momentum method:
                 if (neuron.learn_parameters.momentum_delta_vsize)
-                    weight_deltas = std::accumulate(neuron.weights_deltas[weights_it].begin(), neuron.weights_deltas[weights_it].end(), 0.0);
-                neuron.batch.weights_deltas[weights_it][batch_it] = delta * this->layers[layer_it - 1].neurons[weights_it].output + neuron.learn_parameters.momentum_constans * weight_deltas;
+                    weight_deltas = std::accumulate(neuron.weights_deltas[weights_it].begin(), neuron.weights_deltas[weights_it].end(), 0.0) * neuron.learn_parameters.momentum_constans;
+                else
+                    weight_deltas = 0;
+                neuron.batch.weights_deltas[weights_it][batch_it] = delta * this->layers[layer_it - 1].neurons[weights_it].output + weight_deltas;
             }
         }
     }
@@ -359,14 +354,14 @@ void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
     this->layers = std::vector<Layer>();
 
     //input layer
-    this->layers.push_back(Layer(this->input_size, this->input_size, params));
+    this->layers.push_back(Layer(this->input_size, this->input_size, this->learn_parameters));
 
     //Hidden layers
     for (uint32_t i{0}; i < hidden_layers.size(); i++)
-        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), params));
+        this->layers.push_back(Layer(hidden_layers[i], (i > 0 ? hidden_layers[i - 1] : input_size), this->learn_parameters));
 
     //output layer
-    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), params));
+    this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), this->learn_parameters));
 }
 
 Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)
@@ -414,9 +409,6 @@ Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)
 
     for (uint32_t i{0}; i < input_data.size(); i++)
         this->indexes.push_back(i);
-
-    //Mr.Miłosz told me that will be fine
-    this->error_ratio = 1.05;
 }
 
 Net::~Net() {}

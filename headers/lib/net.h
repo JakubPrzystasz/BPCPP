@@ -73,12 +73,6 @@ public:
     std::vector<Layer> layers;
 
     /**
-     * Error ratio
-     */
-    double error_ratio;
-
-
-    /**
      * Trains network
      * @arg max_epoch - maximum number of training epochs
      * @arg error_goal - when SSE is less or equal error goal, stops training 

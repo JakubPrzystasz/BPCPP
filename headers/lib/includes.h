@@ -198,12 +198,14 @@ struct LearnParams
         //Default learn method is stochastic
         this->batch_size = 1;
 
-        this->learning_rate = 0.1;
+        this->learning_rate = 0.01;
 
-        this->learning_accelerating_constans = 1.01;
-        this->learning_decelerating_constans = 0.99;
+        this->learning_accelerating_constans = 1.05;
+        this->learning_decelerating_constans = 0.7;
 
-        this->momentum_constans = 0.95;
+        this->error_ratio = 1.04;
+
+        this->momentum_constans = 0.90;
 
         //Size of vector for weights deltas for each neuron
         //Vector of deltas is necessary for momentum method

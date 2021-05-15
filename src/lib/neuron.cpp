@@ -58,8 +58,10 @@ Neuron::Neuron(uint32_t inputs, LearnParams params): batch(inputs,params.batch_s
     this->weights = data_row(inputs, 0);
 
     for (auto &weight : this->weights)
+        //weight = 0.5;//random_value(this->learn_parameters.weights_range);
         weight = random_value(this->learn_parameters.weights_range);
 
+    //this->bias = 0.5;//random_value(this->learn_parameters.bias_range);
     this->bias = random_value(this->learn_parameters.bias_range);
 
     //Weight delta for momentum method
