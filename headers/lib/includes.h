@@ -195,8 +195,8 @@ struct LearnParams
 		 */
     LearnParams()
     {
-        //Default learn method is stochastic
-        this->batch_size = 1;
+        //Default learn method is batch
+        this->batch_size = 0;
 
         this->learning_rate = 0.01;
 

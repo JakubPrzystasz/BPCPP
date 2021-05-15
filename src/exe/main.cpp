@@ -7,10 +7,10 @@ int main()
     pattern_set input;
     Net::read_file(std::string("INPUT_DATA.txt"), input);
 
-    auto myNet = Net(input, {0.8,0.2});
+    auto myNet = Net(input, {1.0,0.0});
 
     LearnParams netParams = LearnParams();
-    netParams.batch_size = 0;
+    netParams.batch_size = 1;
 
     myNet.setup({3}, netParams);
     auto start = std::chrono::high_resolution_clock::now();
@@ -21,7 +21,7 @@ int main()
   
     // To get the value of duration use the count()
     // member function on the duration object
-   //std::cout << duration.count() << std::endl;
+    //std::cout << duration.count() << std::endl;
 
     uint32_t i=0;
     double best = test.train_set_SSE.front();
