@@ -40,6 +40,10 @@ class Net
 
     void update_learning_rate(LearningRateUpdate value);
 
+    double prev_SSE;
+
+    uint32_t epoch;
+
 public:
 
     /**
@@ -105,8 +109,8 @@ public:
     void update_weights();
 
     /**
-     * Calculate new weights
-     * @arg sample_number - number of smaple in input_data vector
+     * Calculate gradient
+     * @arg sample_number - number of sample in input_data vector
      */
     void learn(uint32_t sample_number);
 

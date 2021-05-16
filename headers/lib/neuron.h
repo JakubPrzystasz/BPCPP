@@ -67,23 +67,6 @@ struct Neuron
 	func_ptr derivative;
 
 	/**
-	 * Updates weights computed in batch
-	 */
-	void update_weights()
-	{	
-		double tmp;
-		for (uint32_t it{0}; it < this->weights.size(); it++){
-			tmp = std::accumulate(batch.weights_deltas[it].begin(), batch.weights_deltas[it].end(), 0.0);
-			this->weight_update[it] += tmp;
-			this->weights[it] += tmp;
-		}
-
-		tmp = std::accumulate(this->batch.bias_deltas.begin(), this->batch.bias_deltas.end(), 0.0);
-		this->bias_update += tmp;
-		this->bias += tmp; 
-	}
-
-	/**
      * @arg inputs - number of neurons in previous layer
 	 * @arg params - neuron learning parameters 
      */
