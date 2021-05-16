@@ -11,10 +11,10 @@ int main()
     //auto myNet = Net(input, {0.8,0.2});
 
     LearnParams netParams = LearnParams();
-    //netParams.learning_accelerating_constans = 0.0;
-    //netParams.learning_decelerating_constans = 0.0;
-    netParams.momentum_delta_vsize = 0;
-    netParams.momentum_constans = 0.0;
+    // netParams.learning_accelerating_constans = 0.0;
+    // netParams.learning_decelerating_constans = 0.0;
+    // netParams.momentum_delta_vsize = 0;
+    // netParams.momentum_constans = 0.0;
 
     myNet.setup({13, 3}, netParams);
     auto start = std::chrono::high_resolution_clock::now();
