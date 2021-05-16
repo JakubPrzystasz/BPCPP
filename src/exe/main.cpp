@@ -7,33 +7,41 @@ int main()
     pattern_set input;
     Net::read_file(std::string("INPUT_DATA.txt"), input);
 
-    auto myNet = Net(input, {1.0,0.0});
+    auto myNet = Net(input, {1, 0});
+    //auto myNet = Net(input, {0.8,0.2});
 
     LearnParams netParams = LearnParams();
-    netParams.batch_size = 1;
+    netParams.learning_accelerating_constans = 0.0;
+    netParams.learning_decelerating_constans = 0.0;
+    netParams.momentum_delta_vsize = 1;
 
-    myNet.setup({3}, netParams);
+    myNet.setup({13, 3}, netParams);
     auto start = std::chrono::high_resolution_clock::now();
-    auto test = myNet.train(10000);
+    auto test = myNet.train(100);
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
-  
+
     // To get the value of duration use the count()
     // member function on the duration object
     //std::cout << duration.count() << std::endl;
 
-    uint32_t i=0;
+    uint32_t i = 0;
     double best = test.train_set_SSE.front();
     uint32_t best_id = 0;
-    for(auto &result: test.train_set_SSE){
-        if(result < best){
+    for (auto &result : test.train_set_SSE)
+    {
+        if (result < best)
+        {
             best = result;
             best_id = i;
         }
         i++;
     }
     std::cout << "best result: " << best << "   at: " << best_id << std::endl;
+
+    for (auto &epoch : test.train_set_SSE)
+        std::cout << epoch << std::endl;
 
     return 0;
 }

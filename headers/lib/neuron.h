@@ -19,6 +19,7 @@ struct Neuron
 	Batch batch;
 
 	data_set weights_deltas;
+	data_row bias_deltas;
 
 	data_row weight_update;
 	double bias_update;
@@ -42,6 +43,8 @@ struct Neuron
 	 * Delta value
 	 */
 	double delta;
+
+	double gradient;
 
 	/**
      * Bias of neuron
@@ -70,12 +73,12 @@ struct Neuron
 	{	
 		double tmp;
 		for (uint32_t it{0}; it < this->weights.size(); it++){
-			tmp = std::accumulate(batch.weights_deltas[it].begin(), batch.weights_deltas[it].end(), 0.0) / static_cast<double>(this->learn_parameters.batch_size); 
+			tmp = std::accumulate(batch.weights_deltas[it].begin(), batch.weights_deltas[it].end(), 0.0);
 			this->weight_update[it] += tmp;
 			this->weights[it] += tmp;
 		}
 
-		tmp = std::accumulate(this->batch.bias_deltas.begin(), this->batch.bias_deltas.end(), 0.0) / static_cast<double>(this->learn_parameters.batch_size);
+		tmp = std::accumulate(this->batch.bias_deltas.begin(), this->batch.bias_deltas.end(), 0.0);
 		this->bias_update += tmp;
 		this->bias += tmp; 
 	}
