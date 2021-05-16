@@ -44,8 +44,6 @@ struct Neuron
 	 */
 	double delta;
 
-	double gradient;
-
 	/**
      * Bias of neuron
      */

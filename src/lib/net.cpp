@@ -212,7 +212,7 @@ void Net::get_delta(uint32_t sample_number)
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
     {
         auto &neuron = last_layer.neurons[neuron_it];
-        neuron.delta = -1.0 * (this->input_data[sample_number].output[neuron_it] - neuron.output) * neuron.derivative_output;
+        neuron.delta = (this->input_data[sample_number].output[neuron_it] - neuron.output) * neuron.derivative_output * -1.0;
     }
 
     for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
@@ -251,28 +251,6 @@ double Net::get_cost(uint32_t sample_number)
 
 void Net::update_weights()
 {
-
-    //So finally update weights and biases:
-    //TODO:
-    //MAKE ONE LOOP INSTEAD OF 3 the same loops
-    for (uint32_t i{1}; i < this->layers.size(); i++)
-    {
-        for (auto &neuron : this->layers[i].neurons)
-        {
-            double tmp;
-            for (uint32_t it{0}; it <  neuron.weights.size(); it++)
-            {
-                tmp = std::accumulate(neuron.batch.weights_deltas[it].begin(), neuron.batch.weights_deltas[it].end(), 0.0);
-                neuron.weight_update[it] += tmp;
-                neuron.weights[it] += tmp;
-            }
-
-            tmp = std::accumulate(neuron.batch.bias_deltas.begin(), neuron.batch.bias_deltas.end(), 0.0);
-            neuron.bias_update += tmp;
-            neuron.bias += tmp;
-        }
-    }
-
     this->SSE *= 0.5;
     //Make sure that net has been feed
     if (this->epoch)
@@ -286,44 +264,61 @@ void Net::update_weights()
             else if (error_r < 1)
                 this->update_learning_rate(LearningRateUpdate::Increase);
         }
+    }
 
-        //Momentum:
-        if (true == false &&learn_parameters.momentum_delta_vsize && learn_parameters.momentum_constans > 0)
+    //Accumulate weight and bias upadtes form each run
+    for (uint32_t i{1}; i < this->layers.size(); i++)
+    {
+        for (auto &neuron : this->layers[i].neurons)
         {
+            for (uint32_t it{0}; it < neuron.weights.size(); it++)
+                neuron.weight_update[it] = std::accumulate(neuron.batch.weights_deltas[it].begin(), neuron.batch.weights_deltas[it].end(), 0.0) * neuron.learn_parameters.learning_rate;
 
-            /*
-      if (neuron.learn_parameters.momentum_delta_vsize)
+            neuron.bias_update = std::accumulate(neuron.batch.bias_deltas.begin(), neuron.batch.bias_deltas.end(), 0.0) * neuron.learn_parameters.learning_rate;
+        }
+    }
+
+    if (this->epoch)
+    {
+    //Momentum:
+        if (learn_parameters.momentum_delta_vsize && learn_parameters.momentum_constans > 0)
+        {
+            uint32_t index = (this->epoch + 1) % this->learn_parameters.momentum_delta_vsize;
+            for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
             {
+                for (auto &neuron : this->layers[layer_it].neurons)
+                {
+                /*
                 neuron.batch.bias_deltas[batch_it] = -1.0 * neuron.delta * neuron.learn_parameters.learning_rate;
                 neuron.batch.bias_deltas[batch_it] *= (1.0 - neuron.learn_parameters.momentum_constans) * neuron.learn_parameters.learning_rate;
                 neuron.batch.bias_deltas[batch_it] += std::accumulate(neuron.bias_deltas.begin(), neuron.bias_deltas.end(), 0.0) * neuron.learn_parameters.momentum_constans;
-            }
-            else]]]
-			
-                if (neuron.learn_parameters.momentum_delta_vsize)
+
+                for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
                 {
                     neuron.batch.weights_deltas[weights_it][batch_it] = -1.0 * neuron.learn_parameters.learning_rate * neuron.delta * this->layers[layer_it - 1].neurons[weights_it].output;
                     neuron.batch.weights_deltas[weights_it][batch_it] *= (1.0 - neuron.learn_parameters.momentum_constans) * neuron.learn_parameters.learning_rate;
                     neuron.batch.weights_deltas[weights_it][batch_it] += std::accumulate(neuron.weights_deltas[weights_it].begin(), neuron.weights_deltas[weights_it].end(), 0.0) * neuron.learn_parameters.momentum_constans;
                 }
-                else
                 */
-            uint32_t index = (this->epoch + 1) % this->learn_parameters.momentum_delta_vsize;
-
-            for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
-            {
-                for (auto &neuron : this->layers[layer_it].neurons)
-                {
-                    neuron.batch.bias_deltas[batch_it] = -1.0 * neuron.delta * neuron.learn_parameters.learning_rate;
-                    neuron.batch.bias_deltas[batch_it] *= (1.0 - neuron.learn_parameters.momentum_constans) * neuron.learn_parameters.learning_rate;
-                    neuron.batch.bias_deltas[batch_it] += std::accumulate(neuron.bias_deltas.begin(), neuron.bias_deltas.end(), 0.0) * neuron.learn_parameters.momentum_constans;
-
                     neuron.bias_deltas[index] = neuron.bias_update;
 
-                    for (uint32_t weight_it{0}; weight_it < neuron.weights.size(); weight_it++)
-                        neuron.weights_deltas[weight_it][index] = neuron.weight_update[weight_it];
+                    for (uint32_t it{0}; it < neuron.weights.size(); it++)
+                        neuron.weights_deltas[it][index] = neuron.weight_update[it];
                 }
             }
+        }
+
+    }
+
+    //Finally update weights and biases
+    for (uint32_t i{1}; i < this->layers.size(); i++)
+    {
+        for (auto &neuron : this->layers[i].neurons)
+        {
+            neuron.bias -= neuron.bias_update;
+
+            for (uint32_t it{0}; it < neuron.weights.size(); it++)
+                neuron.weights[it] -= neuron.weight_update[it];
         }
     }
 }
@@ -342,13 +337,12 @@ void Net::learn(uint32_t sample_number)
         for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
         {
             auto &neuron = layer.neurons[neuron_it];
-            neuron.batch.bias_deltas[batch_it] = -1.0 * neuron.delta * neuron.learn_parameters.learning_rate;
+            neuron.batch.bias_deltas[batch_it] = neuron.delta;
 
             for (uint32_t weights_it{0}; weights_it < neuron.weights.size(); weights_it++)
-                neuron.batch.weights_deltas[weights_it][batch_it] = -1.0 * neuron.learn_parameters.learning_rate * neuron.delta * this->layers[layer_it - 1].neurons[weights_it].output;
+                neuron.batch.weights_deltas[weights_it][batch_it] = neuron.delta * this->layers[layer_it - 1].neurons[weights_it].output;
         }
     }
-
 }
 
 bool Net::get_classification_succes(uint32_t sample_number)

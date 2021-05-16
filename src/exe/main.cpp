@@ -40,9 +40,11 @@ int main()
         i++;
     }
     std::cout << "best result: " << best << "   at: " << best_id << std::endl;
-
-    for (auto &epoch : test.train_set_SSE)
-        std::cout << epoch << std::endl;
+    i =0;
+    for (auto &epoch : test.train_set_SSE){
+        std::cout << i << "  " << epoch << std::endl;
+    i++;
+        }
 
     return 0;
 }
