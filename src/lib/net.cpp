@@ -268,10 +268,10 @@ void Net::update_weights()
     {
         for (auto &neuron : this->layers[i].neurons)
         {
+            neuron.bias_update = std::accumulate(neuron.batch.bias_deltas.begin(), neuron.batch.bias_deltas.end(), 0.0) * neuron.learn_parameters.learning_rate;
+            
             for (uint32_t it{0}; it < neuron.weights.size(); it++)
                 neuron.weight_update[it] = std::accumulate(neuron.batch.weights_deltas[it].begin(), neuron.batch.weights_deltas[it].end(), 0.0) * neuron.learn_parameters.learning_rate;
-
-            neuron.bias_update = std::accumulate(neuron.batch.bias_deltas.begin(), neuron.batch.bias_deltas.end(), 0.0) * neuron.learn_parameters.learning_rate;
         }
     }
 
@@ -352,7 +352,7 @@ void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
 
     //If params.batch_size is 0, then set batch_size equal to size of whole training set
     if (this->learn_parameters.batch_size == 0)
-        this->learn_parameters.batch_size = this->input_data.size() * this->subsets_ratio.front();
+        this->learn_parameters.batch_size = this->train_set.size();
 
     if ((this->train_set.size() % this->learn_parameters.batch_size) != 0)
         throw std::invalid_argument("Batch size is not divisible by size of train set");

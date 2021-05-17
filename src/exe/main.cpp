@@ -7,18 +7,13 @@ int main()
     pattern_set input;
     Net::read_file(std::string("INPUT_DATA.txt"), input);
 
-    auto myNet = Net(input, {1, 0});
-    //auto myNet = Net(input, {0.8,0.2});
+    auto myNet = Net(input, {0.8,0.2});
 
     LearnParams netParams = LearnParams();
-    // netParams.learning_accelerating_constans = 0.0;
-    // netParams.learning_decelerating_constans = 0.0;
-    // netParams.momentum_delta_vsize = 0;
-    // netParams.momentum_constans = 0.0;
 
     myNet.setup({13, 3}, netParams);
     auto start = std::chrono::high_resolution_clock::now();
-    auto test = myNet.train(100);
+    auto test = myNet.train(1000);
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);

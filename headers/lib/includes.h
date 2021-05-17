@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INCLUDES_H
+#define INCLUDES_H
 
 #define _CRT_SECURE_NO_WARNINGS
 #define _USE_MATH_DEFINES
@@ -27,12 +28,7 @@ typedef std::vector<data_row> data_set;
 typedef std::vector<Pattern> pattern_set;
 typedef std::pair<double, double> rand_range;
 typedef double (*func_ptr)(double, double *);
-
-/**
- * Returns random value in given range
- * @arg range - pair of double - first is min, second is max 
- */
-double random_value(rand_range range);
+typedef double (*init_func_ptr)(void *);
 
 /**
     * Store weights and bias updates of each pattern in batch
@@ -55,47 +51,50 @@ struct Batch
  */
 namespace ActivationFunction
 {
-    inline double __normalize(double value)
-    {
-        if (std::isinf(value))
-        {
-            if (value > 0.0)
-                value = std::numeric_limits<double>::max();
-            else
-                value = std::numeric_limits<double>::min();
-        }
-        return value;
-    }
+    /**
+     * Normalize values to right range in lang specific
+     */
+    extern double __normalize(double value);
 
     /**
 	 * Unipolar neuron activation function - as parameter it takes array of one element (Beta constant)
 	 */
-    double unipolar(double input, double *params);
+    extern double unipolar(double input, double *params);
 
     /**
 	 * Unipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
 	 */
-    double unipolar_derivative(double input, double *params);
+    extern double unipolar_derivative(double input, double *params);
 
     /**
 	 * Bipolar neuron activation function - as parameter it takes array of one element (Beta constant)
 	 */
-    double bipolar(double input, double *params);
+    extern double bipolar(double input, double *params);
 
     /**
 	 * Bipolar neuron activation derivative function - as parameter it takes array of one element (Beta constant), and base function output for the same argument
 	 */
-    double bipolar_derivative(double input, double *params);
+    extern double bipolar_derivative(double input, double *params);
 
     /**
 	 * Linear neuron activation 
 	 */
-    double purelin(double input, double *params);
+    extern double purelin(double input, double *params);
 
     /**
 	 * Linear neuron activation derivative
 	 */
-    double purelin_derivative(double input, double *params);
+    extern double purelin_derivative(double input, double *params);
+};
+
+namespace InitFunction
+{
+    /**
+     * Returns random value in given range
+     * @arg range - pair of double - first is min, second is max 
+     */
+    extern double random_range(void *params);
+
 };
 
 enum class TrainResult
@@ -190,9 +189,14 @@ struct LearnParams
     func_ptr derivative;
 
     /**
+     * Pointer to initialization funtion 
+     */
+    init_func_ptr init_function;
+
+    /**
 		 * Default constructor
 		 * sets all values to default
-		 */
+	*/
     LearnParams()
     {
         //Default learn method is batch
@@ -215,6 +219,7 @@ struct LearnParams
 
         this->weights_range = std::make_pair(-1.0, 1.0);
         this->bias_range = std::make_pair(-1.0, 1.0);
+        this->init_function = InitFunction::random_range;
 
         this->activation = ActivationFunction::bipolar;
         this->derivative = ActivationFunction::bipolar_derivative;
@@ -239,3 +244,6 @@ struct LearnOutput
 
     TrainResult result;
 };
+
+
+#endif
