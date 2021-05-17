@@ -9,6 +9,7 @@ int main()
     auto myNet = Net(input, {0.8,0.2});
 
     LearnParams netParams = LearnParams();
+    netParams.init_function = InitFunction::nw;
 
     myNet.setup({13, 3}, netParams);
     auto start = std::chrono::high_resolution_clock::now();

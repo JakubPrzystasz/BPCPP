@@ -16,7 +16,7 @@ namespace ActivationFunction
 
     double unipolar(double input, double *params)
     {
-        double ret = __normalize((1.0 / (1.0 + pow(M_E, -((*params) * input)))));
+        double ret = __normalize((1.0 / (1.0 + std::pow(M_E, -((*params) * input)))));
         if (ret > 1.0)
             return 1.0;
         if (ret < 0)
@@ -41,7 +41,7 @@ namespace ActivationFunction
 
     double bipolar_derivative(double input, double *params)
     {
-        return __normalize((*params) * (1.0 - pow(input, 2.0)));
+        return __normalize((*params) * (1.0 - std::pow(input, 2.0)));
     }
 
     double purelin(double input, __attribute__ ((unused)) double *params)
@@ -53,21 +53,6 @@ namespace ActivationFunction
     {
         return 1.0;
     }
-}
-
-namespace InitFunction
-{
-    double random_range(void *params)
-    {
-        rand_range &range = *(rand_range *)params;
-        std::mt19937_64 rng;
-        uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-        std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
-        rng.seed(ss);
-        std::uniform_real_distribution<double> unif(static_cast<double>(std::get<0>(range)), static_cast<double>(std::get<1>(range)));
-        return unif(rng);
-    }
-
 }
 
 Neuron::Neuron(uint32_t inputs, LearnParams params) : batch(inputs, params.batch_size)
@@ -84,10 +69,7 @@ Neuron::Neuron(uint32_t inputs, LearnParams params) : batch(inputs, params.batch
     //Initialize weights and bias with random values
     this->weights = data_row(inputs, 0);
 
-    for (auto &weight : this->weights)
-        weight = this->learn_parameters.init_function((void *)&this->learn_parameters.weights_range);
-
-    this->bias = this->learn_parameters.init_function((void *)&this->learn_parameters.bias_range);
+    this->bias = 0;
 
     //Weight delta for momentum method
     this->weights_deltas = data_set(inputs, data_row(this->learn_parameters.momentum_delta_vsize, 0));

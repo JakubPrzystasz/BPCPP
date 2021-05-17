@@ -89,13 +89,14 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     LearnOutput out;
     //shuffle values
     {
+        //make new generator
         std::mt19937_64 rng;
         uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
         rng.seed(ss);
         std::mt19937 g(rng());
-        //TODO:
-        //std::shuffle(this->indexes.begin(), this->indexes.end(), g);
+        
+        std::shuffle(this->indexes.begin(), this->indexes.end(), g);
 
         for (uint32_t i{0}; i < train_set.size(); i++)
             this->train_set[i] = this->indexes[i];
@@ -268,10 +269,10 @@ void Net::update_weights()
     {
         for (auto &neuron : this->layers[i].neurons)
         {
-            neuron.bias_update = std::accumulate(neuron.batch.bias_deltas.begin(), neuron.batch.bias_deltas.end(), 0.0) * neuron.learn_parameters.learning_rate;
+            neuron.bias_update = std::accumulate(VEC_RANGE(neuron.batch.bias_deltas), 0.0) * neuron.learn_parameters.learning_rate;
             
             for (uint32_t it{0}; it < neuron.weights.size(); it++)
-                neuron.weight_update[it] = std::accumulate(neuron.batch.weights_deltas[it].begin(), neuron.batch.weights_deltas[it].end(), 0.0) * neuron.learn_parameters.learning_rate;
+                neuron.weight_update[it] = std::accumulate(VEC_RANGE(neuron.batch.weights_deltas[it]), 0.0) * neuron.learn_parameters.learning_rate;
         }
     }
 
@@ -283,12 +284,12 @@ void Net::update_weights()
         {
             for (auto &neuron : this->layers[layer_it].neurons)
             {
-                neuron.bias_update = (neuron.bias_update * (1.0 - neuron.learn_parameters.momentum_constans)) + (std::accumulate(neuron.bias_deltas.begin(), neuron.bias_deltas.end(), 0.0) * neuron.learn_parameters.momentum_constans);
+                neuron.bias_update = (neuron.bias_update * (1.0 - neuron.learn_parameters.momentum_constans)) + (std::accumulate(VEC_RANGE(neuron.bias_deltas), 0.0) * neuron.learn_parameters.momentum_constans);
                 neuron.bias_deltas[index] = neuron.bias_update;
 
                 for (uint32_t it{0}; it < neuron.weights.size(); it++)
                 {
-                    neuron.weight_update[it] = (neuron.weight_update[it] * (1.0 - neuron.learn_parameters.momentum_constans)) + (std::accumulate(neuron.weights_deltas[it].begin(), neuron.weights_deltas[it].end(), 0.0) * neuron.learn_parameters.momentum_constans);
+                    neuron.weight_update[it] = (neuron.weight_update[it] * (1.0 - neuron.learn_parameters.momentum_constans)) + (std::accumulate(VEC_RANGE(neuron.weights_deltas[it]), 0.0) * neuron.learn_parameters.momentum_constans);
                     neuron.weights_deltas[it][index] = neuron.weight_update[it];
                 }
             }

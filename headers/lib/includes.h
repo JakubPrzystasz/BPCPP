@@ -17,6 +17,8 @@
 #include <numeric>
 #include <map>
 
+#define VEC_RANGE(VEC) VEC.begin(), VEC.end()
+
 struct Neuron;
 struct Layer;
 struct Pattern;
@@ -28,7 +30,20 @@ typedef std::vector<data_row> data_set;
 typedef std::vector<Pattern> pattern_set;
 typedef std::pair<double, double> rand_range;
 typedef double (*func_ptr)(double, double *);
-typedef double (*init_func_ptr)(void *);
+typedef void (*init_func_ptr)(Layer &layer);
+
+namespace accumulate
+{
+    //Squre sum
+    template <typename T>
+    struct square
+    {
+        T operator()(const T &Left, const T &Right) const
+        {
+            return (Left + Right * Right);
+        }
+    };
+}
 
 /**
     * Store weights and bias updates of each pattern in batch
@@ -91,10 +106,22 @@ namespace InitFunction
 {
     /**
      * Returns random value in given range
-     * @arg range - pair of double - first is min, second is max 
+     * @arg rand_range - first is min, second is max
+     * @return uniform random number
      */
-    extern double random_range(void *params);
+    extern double __unifrom_random(rand_range range);
 
+    /**
+     * Nguyen-Widrow initialization function
+     * @arg rand_range - first is min, second is max (uniform init)
+     */
+    extern void nw(Layer &layer);
+
+    /**
+     * Random value based initialization function
+     * @arg params - pointer to rand_range - first value is number of inputs, second value is number on neurons
+     */
+    extern void rand(Layer &layer);
 }
 
 enum class TrainResult
@@ -219,7 +246,7 @@ struct LearnParams
 
         this->weights_range = std::make_pair(-1.0, 1.0);
         this->bias_range = std::make_pair(-1.0, 1.0);
-        this->init_function = InitFunction::random_range;
+        this->init_function = InitFunction::rand;
 
         this->activation = ActivationFunction::bipolar;
         this->derivative = ActivationFunction::bipolar_derivative;
@@ -244,6 +271,5 @@ struct LearnOutput
 
     TrainResult result;
 };
-
 
 #endif
