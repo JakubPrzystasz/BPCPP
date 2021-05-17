@@ -44,16 +44,16 @@ namespace ActivationFunction
         return __normalize((*params) * (1.0 - pow(input, 2.0)));
     }
 
-    double purelin(double input, double *params)
+    double purelin(double input, __attribute__ ((unused)) double *params)
     {
         return input;
     }
 
-    double purelin_derivative(double input, double *params)
+    double purelin_derivative(__attribute__ ((unused))double input, __attribute__ ((unused))double *params)
     {
         return 1.0;
     }
-};
+}
 
 namespace InitFunction
 {
@@ -68,7 +68,7 @@ namespace InitFunction
         return unif(rng);
     }
 
-};
+}
 
 Neuron::Neuron(uint32_t inputs, LearnParams params) : batch(inputs, params.batch_size)
 {

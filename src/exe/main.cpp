@@ -1,5 +1,4 @@
 #include <lib/net.h>
-#include <sciplot/sciplot.hpp>
 #include <chrono>
 
 int main()

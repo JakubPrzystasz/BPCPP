@@ -85,7 +85,7 @@ namespace ActivationFunction
 	 * Linear neuron activation derivative
 	 */
     extern double purelin_derivative(double input, double *params);
-};
+}
 
 namespace InitFunction
 {
@@ -95,7 +95,7 @@ namespace InitFunction
      */
     extern double random_range(void *params);
 
-};
+}
 
 enum class TrainResult
 {

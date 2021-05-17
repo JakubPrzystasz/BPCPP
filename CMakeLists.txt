@@ -19,14 +19,6 @@ include(${CMAKE_SOURCE_DIR}/CMake/BuildExamples.cmake)
 file(MAKE_DIRECTORY "bin")
 RedirectOutputTo("bin")
 
-# Library target
-add_library(sciplot INTERFACE)
-
-target_include_directories(sciplot
-  INTERFACE
-  ${PROJECT_SOURCE_DIR}/headers/sciplot
-)
-
 set(ENGINE_DIR ${PROJECT_SOURCE_DIR}/src/lib)
 
 file(GLOB_RECURSE SRC_FILES 
@@ -41,7 +33,6 @@ foreach(FILE ${SRC_FILES})
 endforeach(FILE)
 
 add_library(Lib STATIC ${ENGINE_SRC})
-target_link_libraries(Lib PRIVATE sciplot)
 
 set(EngineHeaders 
   ${PROJECT_SOURCE_DIR}/headers/lib
