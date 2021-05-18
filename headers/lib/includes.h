@@ -260,6 +260,7 @@ struct LearnParams
 /**
     *Learning output, for future analisys 
  */
+
 struct LearnOutput
 {
 
@@ -273,5 +274,21 @@ struct LearnOutput
     //Percentage accuracy of classification
     data_row test_set_accuracy;
 
+    //Learning time in seconds
+    uint32_t time;
+    uint32_t epoch_count;
     TrainResult result;
+
+    LearnParams input_params;
+    LearnParams output_params;
+
+    std::vector<Layer> input_layers;
+    std::vector<Layer> output_layers;
 };
+
+
+using nlohmann::json;
+void to_json(json& j, const LearnOutput& lo);
+void to_json(json& j, const LearnParams& lo);
+void to_json(json& j, const Neuron& n);
+void to_json(json& j, const Layer& l);

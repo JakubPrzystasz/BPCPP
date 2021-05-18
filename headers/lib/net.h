@@ -45,6 +45,13 @@ class Net
     uint32_t epoch;
 
 public:
+    /**
+     * Defines saving mode
+     */
+    enum class SaveMode{
+        Overwrite,
+        Append,
+    };
 
     /**
      * Read data form text file
@@ -53,6 +60,11 @@ public:
      * @arg input_data - reference to container for read data
      */
     static void read_file(std::string filename, pattern_set &input_data);
+
+    /**
+     * Save learn output to desired file
+     */
+    static void save_output(std::string filename, LearnOutput &output, SaveMode mode);
 
     /**
 	 * Container for learning params, for all neurons in layer

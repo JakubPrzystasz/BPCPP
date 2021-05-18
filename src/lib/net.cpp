@@ -84,9 +84,31 @@ void Net::read_file(std::string filename, pattern_set &input_data)
     }
 }
 
+void Net::save_output(std::string filename, LearnOutput &output, SaveMode mode)
+{
+    std::ofstream outfile;
+
+    switch (mode)
+    {
+    case SaveMode::Append:
+        outfile.open(filename, std::ios_base::app);
+        break;
+    default:
+        outfile.open(filename, std::ios_base::out);
+        break;
+    };
+
+    nlohmann::json json_output = output;
+    outfile << json_output << std::endl;
+}
+
 LearnOutput Net::train(double max_epoch, double error_goal)
 {
     LearnOutput out;
+
+    out.input_params = this->learn_parameters;
+    out.input_layers = std::vector<Layer>(this->layers.begin()+1,this->layers.end());
+
     //shuffle values
     {
         //make new generator
@@ -112,6 +134,8 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     this->epoch = 0;
     uint32_t index{0};
     this->SSE = 0;
+
+    auto start_time = std::chrono::high_resolution_clock::now();
 
     for (; this->epoch < max_epoch; this->epoch++)
     {
@@ -166,6 +190,12 @@ LearnOutput Net::train(double max_epoch, double error_goal)
         if (out.train_set_SSE.back() <= error_goal)
             break;
     }
+
+    auto stop_time = std::chrono::high_resolution_clock::now();
+    out.time = std::chrono::duration_cast<std::chrono::seconds>(stop_time - start_time).count();
+    out.epoch_count = epoch;
+    out.output_params = this->learn_parameters;
+    out.output_layers = std::vector<Layer>(this->layers.begin()+1,this->layers.end());
 
     if (epoch == max_epoch)
         out.result = TrainResult::MaxEpochReached;
@@ -420,3 +450,57 @@ Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)
 }
 
 Net::~Net() {}
+
+void to_json(json &j, const LearnOutput &lo)
+{
+    j = json{
+        {"train_set_SSE", lo.train_set_SSE},
+        {"train_set_MSE", lo.train_set_MSE},
+        {"train_set_accuracy", lo.train_set_accuracy},
+        {"test_set_SSE", lo.test_set_SSE},
+        {"test_set_MSE", lo.test_set_MSE},
+        {"test_set_accuracy", lo.test_set_accuracy},
+        {"result", lo.result == TrainResult::ErrorGoalReached ? "goal" : "max_epoch"},
+        {"epoch_count", lo.epoch_count},
+        {"time", lo.time},
+        {"input_params", lo.input_params},
+        {"output_params", lo.output_params},
+        {"input_layers", lo.input_layers},
+        {"output_layers", lo.output_layers},
+    };
+}
+
+void to_json(json &j, const LearnParams &lp)
+{
+    j = json{
+        {"batch_size", lp.batch_size},
+        {"learning_rate", lp.learning_rate},
+        {"learning_accelerating_constans", lp.learning_accelerating_constans},
+        {"learning_decelerating_constans", lp.learning_decelerating_constans},
+        {"error_ratio", lp.error_ratio},
+        {"momentum_constans", lp.momentum_constans},
+        {"momentum_delta_vsize", lp.momentum_delta_vsize},
+        {"beta_param", lp.beta_param},
+        {"weights_range", lp.weights_range},
+        {"bias_range", lp.bias_range},
+        {"init_function", lp.init_function == InitFunction::rand ? "random" : "nw"},
+        {"activation", lp.activation == ActivationFunction::bipolar ? "bipolar" : lp.activation == ActivationFunction::unipolar ? "unipolar" : "linear"},
+    };
+}
+
+void to_json(json &j, const Neuron &n)
+{
+    j = json{
+        {"learn_parameters", n.learn_parameters},
+        {"bias", n.bias},
+        {"weights", n.weights},
+    };
+}
+
+void to_json(json &j, const Layer &l)
+{
+    j = json{
+        {"learn_parameters", l.learn_parameters},
+        {"neurons", l.neurons},
+    };
+}
