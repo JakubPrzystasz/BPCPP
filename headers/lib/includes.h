@@ -113,7 +113,7 @@ namespace InitFunction
      * @arg rand_range - first is min, second is max
      * @return uniform random number
      */
-    extern double __unifrom_random(rand_range range);
+    extern double __unifrom_random(rand_range range, uint64_t seed);
 
     /**
      * Nguyen-Widrow initialization function
@@ -126,6 +126,12 @@ namespace InitFunction
      * @arg params - pointer to rand_range - first value is number of inputs, second value is number on neurons
      */
     extern void rand(Layer &layer);
+
+    /**
+     * Random value based initialization function
+     * @arg params - pointer to rand_range - first value is number of inputs, second value is number on neurons
+     */
+    extern void const_rand(Layer &layer);
 }
 
 enum class TrainResult

@@ -13,10 +13,9 @@ Layer::Layer(uint32_t neurons, uint32_t inputs, LearnParams params)
 
 namespace InitFunction
 {
-    double __unifrom_random(rand_range range)
+    double __unifrom_random(rand_range range, uint64_t seed)
     {
-        uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-        std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
+        std::seed_seq ss{uint32_t(seed & 0xffffffff), uint32_t(seed >> 32)};
         std::mt19937_64 rng;
         rng.seed(ss);
         std::uniform_real_distribution<double> unif(static_cast<double>(std::get<0>(range)), static_cast<double>(std::get<1>(range)));
@@ -25,16 +24,28 @@ namespace InitFunction
 
     void rand(Layer &layer)
     {
+        uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         for (auto &neuron : layer.neurons)
         {
-            neuron.bias = __unifrom_random(neuron.learn_parameters.bias_range);
+            neuron.bias = __unifrom_random(neuron.learn_parameters.bias_range, timeSeed);
             for (auto &weight : neuron.weights)
-                weight = __unifrom_random(neuron.learn_parameters.weights_range);
+                weight = __unifrom_random(neuron.learn_parameters.weights_range, timeSeed);
+        }
+    }
+
+    void const_rand(Layer &layer)
+    {
+        for (auto &neuron : layer.neurons)
+        {
+            neuron.bias = __unifrom_random(neuron.learn_parameters.bias_range, 123456789ULL);
+            for (auto &weight : neuron.weights)
+                weight = __unifrom_random(neuron.learn_parameters.weights_range, 123456789ULL);
         }
     }
 
     void nw(Layer &layer)
     {
+        uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         //Compute scaling factor
         double theta = 0.7 * std::pow(static_cast<double>(layer.inputs), 1.0 / static_cast<double>(layer.neurons.size()));
         //Initialize the wights and biases for each neuron at random, eg. U(-0.5,0.5)
@@ -45,7 +56,7 @@ namespace InitFunction
             double eta = std::sqrt(std::accumulate(VEC_RANGE(neuron.weights), 0.0, accumulate::square<double>()));
             for (auto &weight : neuron.weights)
                 weight = (theta * weight) / eta;
-            neuron.bias = __unifrom_random(rand_range(-1.0 * theta, theta));
+            neuron.bias = __unifrom_random(rand_range(-1.0 * theta, theta), timeSeed);
         }
     }
 

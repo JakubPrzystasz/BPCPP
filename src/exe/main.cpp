@@ -8,6 +8,7 @@ int main()
     auto net = Net(input, {0.8, 0.2});
 
     LearnParams params = LearnParams();
+    params.init_function = InitFunction::const_rand;
     LearnOutput output;
 
     uint32_t S1_MIN{1};
