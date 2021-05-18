@@ -16,6 +16,20 @@ include(${CMAKE_SOURCE_DIR}/CMake/GroupSources.cmake)
 include(${CMAKE_SOURCE_DIR}/CMake/StaticLibsCompile.cmake)
 include(${CMAKE_SOURCE_DIR}/CMake/BuildExamples.cmake)
 
+
+include(FetchContent)
+
+FetchContent_Declare(json
+  GIT_REPOSITORY https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+  GIT_TAG v3.9.1)
+
+FetchContent_GetProperties(json)
+if(NOT json_POPULATED)
+  FetchContent_Populate(json)
+  add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+
 file(MAKE_DIRECTORY "bin")
 RedirectOutputTo("bin")
 
@@ -39,6 +53,7 @@ set(EngineHeaders
 )
 
 target_include_directories(Lib PRIVATE ${EngineHeaders})
+target_link_libraries(Lib nlohmann_json)
 
 set(ENGINE_DIR ${PROJECT_SOURCE_DIR}/headers/lib)
 
@@ -54,6 +69,7 @@ foreach(FILE ${SRC_FILES})
 endforeach(FILE)
 
 target_sources(Lib PRIVATE ${ENGINE_SRC})
+
 GroupSources("src/lib" "src/lib" "Source Files")
 
 

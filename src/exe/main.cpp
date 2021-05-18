@@ -1,5 +1,16 @@
 #include <lib/net.h>
-#include <chrono>
+
+using nlohmann::json;
+namespace ns
+{
+    void to_json(json &j, const LearnOutput &out)
+    {
+        j = json{
+            {"test", out.test_set_MSE},
+            {"test2", out.test_set_MSE},
+        };
+    }
+}
 
 int main()
 {
@@ -9,11 +20,10 @@ int main()
     auto myNet = Net(input, {0.8,0.2});
 
     LearnParams netParams = LearnParams();
-    netParams.init_function = InitFunction::nw;
 
     myNet.setup({13, 3}, netParams);
     auto start = std::chrono::high_resolution_clock::now();
-    auto test = myNet.train(1000);
+    auto test = myNet.train(100);
     auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
@@ -22,24 +32,27 @@ int main()
     // member function on the duration object
     //std::cout << duration.count() << std::endl;
 
-    uint32_t i = 0;
-    double best = test.train_set_SSE.front();
-    uint32_t best_id = 0;
-    for (auto &result : test.train_set_SSE)
-    {
-        if (result < best)
-        {
-            best = result;
-            best_id = i;
-        }
-        i++;
-    }
-    std::cout << "best result: " << best << "   at: " << best_id << std::endl;
-    i =0;
-    for (auto &epoch : test.train_set_SSE){
-        std::cout << i << "  " << epoch << std::endl;
-    i++;
-        }
+    nlohmann::json j = {1,2,3,4};
+    std::cout << j << std::endl;
+
+    // uint32_t i = 0;
+    // double best = test.train_set_SSE.front();
+    // uint32_t best_id = 0;
+    // for (auto &result : test.train_set_SSE)
+    // {
+    //     if (result < best)
+    //     {
+    //         best = result;
+    //         best_id = i;
+    //     }
+    //     i++;
+    // }
+    // std::cout << "best result: " << best << "   at: " << best_id << std::endl;
+    // i = 0;
+    // for (auto &epoch : test.train_set_SSE){
+    //     std::cout << i << "  " << epoch << std::endl;
+    //     i++;
+    // }
 
     return 0;
 }

@@ -95,7 +95,7 @@ LearnOutput Net::train(double max_epoch, double error_goal)
         std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
         rng.seed(ss);
         std::mt19937 g(rng());
-        
+
         std::shuffle(this->indexes.begin(), this->indexes.end(), g);
 
         for (uint32_t i{0}; i < train_set.size(); i++)
@@ -270,7 +270,7 @@ void Net::update_weights()
         for (auto &neuron : this->layers[i].neurons)
         {
             neuron.bias_update = std::accumulate(VEC_RANGE(neuron.batch.bias_deltas), 0.0) * neuron.learn_parameters.learning_rate;
-            
+
             for (uint32_t it{0}; it < neuron.weights.size(); it++)
                 neuron.weight_update[it] = std::accumulate(VEC_RANGE(neuron.batch.weights_deltas[it]), 0.0) * neuron.learn_parameters.learning_rate;
         }

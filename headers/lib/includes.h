@@ -1,5 +1,4 @@
-#ifndef INCLUDES_H
-#define INCLUDES_H
+#pragma once
 
 #define _CRT_SECURE_NO_WARNINGS
 #define _USE_MATH_DEFINES
@@ -16,6 +15,8 @@
 #include <fstream>
 #include <numeric>
 #include <map>
+#include <chrono>
+#include <nlohmann/json.hpp>
 
 #define VEC_RANGE(VEC) VEC.begin(), VEC.end()
 
@@ -32,6 +33,9 @@ typedef std::pair<double, double> rand_range;
 typedef double (*func_ptr)(double, double *);
 typedef void (*init_func_ptr)(Layer &layer);
 
+/**
+ * Helper for std::accumulate
+ */
 namespace accumulate
 {
     //Squre sum
@@ -271,5 +275,3 @@ struct LearnOutput
 
     TrainResult result;
 };
-
-#endif
