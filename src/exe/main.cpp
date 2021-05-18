@@ -3,17 +3,32 @@
 int main()
 {
     pattern_set input;
-    Net::read_file(std::string("INPUT_DATA.txt"), input);
+    Net::read_file("INPUT_DATA.txt", input);
+    Net::open_file("OUTPUT.json");
+    auto net = Net(input, {0.8, 0.2});
 
-    auto myNet = Net(input, {0.8, 0.2});
+    LearnParams params = LearnParams();
+    LearnOutput output;
 
-    LearnParams netParams = LearnParams();
+    uint32_t S1_MIN{1};
+    uint32_t S1_MAX{26};
+    
+    uint32_t S2_MIN{1};
+    uint32_t S2_MAX{26};
 
-    myNet.setup({13, 3}, netParams);
+    uint32_t left{625};
+    uint32_t i{1};
 
-    auto test = myNet.train(2000);
+    for(uint32_t S1{S1_MIN};S1<S1_MAX;S1++){
+        for(uint32_t S2{S2_MIN};S2<S2_MAX;S2++){
+            net.setup({S1, S2}, params);
+            output = net.train(10000,0.001);
+            Net::save_output("OUTPUT.json", output);
+            std::cout << "Iterations left: " << left - i << " " << S1 << " " << S2 << std::endl;
+            i++;
+        }
+    }
 
-    Net::save_output("OUTPUT.json", test, Net::SaveMode::Overwrite);
-
+    Net::close_file("OUTPUT.json");
     return 0;
 }

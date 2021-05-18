@@ -86,20 +86,34 @@ void Net::read_file(std::string filename, pattern_set &input_data)
 
 void Net::save_output(std::string filename, LearnOutput &output, SaveMode mode)
 {
-    std::ofstream outfile;
+    std::fstream outfile;
+    nlohmann::json json_output = output;
 
     switch (mode)
     {
     case SaveMode::Append:
         outfile.open(filename, std::ios_base::app);
+        outfile << json_output << ',' << std::endl
+                << std::endl;
         break;
     default:
         outfile.open(filename, std::ios_base::out);
+        outfile << json_output << std::endl;
         break;
     };
+}
 
-    nlohmann::json json_output = output;
-    outfile << json_output << std::endl;
+void Net::open_file(std::string filename){
+    std::fstream outfile;
+    outfile.open(filename, std::ios_base::out);
+    outfile << '[' << std::endl;
+}
+
+void Net::close_file(std::string filename){
+    std::fstream outfile;
+    outfile.open(filename, std::ios_base::app);
+    outfile << "{}" << std::endl;
+    outfile << ']' << std::endl;
 }
 
 LearnOutput Net::train(double max_epoch, double error_goal)
@@ -107,7 +121,7 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     LearnOutput out;
 
     out.input_params = this->learn_parameters;
-    out.input_layers = std::vector<Layer>(this->layers.begin()+1,this->layers.end());
+    out.input_layers = std::vector<Layer>(this->layers.begin() + 1, this->layers.end());
 
     //shuffle values
     {
@@ -195,8 +209,9 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     out.time = std::chrono::duration_cast<std::chrono::seconds>(stop_time - start_time).count();
     out.epoch_count = epoch;
     out.output_params = this->learn_parameters;
-    out.output_layers = std::vector<Layer>(this->layers.begin()+1,this->layers.end());
-
+    out.output_layers = std::vector<Layer>(this->layers.begin() + 1, this->layers.end());
+    out.error_goal = error_goal;
+    
     if (epoch == max_epoch)
         out.result = TrainResult::MaxEpochReached;
     else
@@ -484,7 +499,8 @@ void to_json(json &j, const LearnParams &lp)
         {"weights_range", lp.weights_range},
         {"bias_range", lp.bias_range},
         {"init_function", lp.init_function == InitFunction::rand ? "random" : "nw"},
-        {"activation", lp.activation == ActivationFunction::bipolar ? "bipolar" : lp.activation == ActivationFunction::unipolar ? "unipolar" : "linear"},
+        {"activation", lp.activation == ActivationFunction::bipolar ? "bipolar" : lp.activation == ActivationFunction::unipolar ? "unipolar"
+                                                                                                                                : "linear"},
     };
 }
 

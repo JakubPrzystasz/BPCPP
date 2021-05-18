@@ -277,6 +277,7 @@ struct LearnOutput
     //Learning time in seconds
     uint32_t time;
     uint32_t epoch_count;
+    double error_goal;
     TrainResult result;
 
     LearnParams input_params;

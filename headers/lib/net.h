@@ -64,7 +64,10 @@ public:
     /**
      * Save learn output to desired file
      */
-    static void save_output(std::string filename, LearnOutput &output, SaveMode mode);
+    static void save_output(std::string filename, LearnOutput &output, SaveMode mode = SaveMode::Append);
+
+    static void open_file(std::string filename);
+    static void close_file(std::string filename);
 
     /**
 	 * Container for learning params, for all neurons in layer
