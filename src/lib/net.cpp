@@ -199,7 +199,7 @@ LearnOutput Net::train(double max_epoch, double error_goal)
         classification_accuracy = 0;
         for (auto value : classification_test)
             classification_accuracy += static_cast<double>(value);
-        out.test_set_accuracy.push_back(classification_accuracy / static_cast<double>(train_set.size()));
+        out.test_set_accuracy.push_back(classification_accuracy / static_cast<double>(test_set.size()));
 
         if (out.train_set_SSE.back() <= error_goal)
             break;
