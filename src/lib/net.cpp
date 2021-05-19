@@ -1,5 +1,18 @@
 #include "net.h"
 
+std::vector<std::pair<double, std::vector<uint32_t>>>::iterator Net::get_class_vector(double class_value)
+{
+    std::vector<std::pair<double, std::vector<uint32_t>>>::iterator it;
+
+    for (it = this->class_sets.begin(); it < this->class_sets.end(); it++)
+    {
+        if (it->first == class_value)
+            return it;
+    }
+
+    return this->class_sets.end();
+}
+
 void Net::update_learning_rate(LearningRateUpdate value)
 {
     switch (value)
@@ -103,17 +116,19 @@ void Net::save_output(std::string filename, LearnOutput &output, SaveMode mode)
     };
 }
 
-void Net::open_file(std::string filename){
+void Net::open_file(std::string filename)
+{
     std::fstream outfile;
     outfile.open(filename, std::ios_base::out);
     outfile << '[' << std::endl;
 }
 
-void Net::close_file(std::string filename){
+void Net::close_file(std::string filename)
+{
     std::fstream outfile;
     outfile.open(filename, std::ios_base::app);
-    outfile << "{}" << std::endl;
-    outfile << ']' << std::endl;
+    outfile << "{ }" << std::endl
+            << ']' << std::endl;
 }
 
 LearnOutput Net::train(double max_epoch, double error_goal)
@@ -125,20 +140,36 @@ LearnOutput Net::train(double max_epoch, double error_goal)
 
     //shuffle values
     {
-        //make new generator
         std::mt19937_64 rng;
         uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         std::seed_seq ss{uint32_t(timeSeed & 0xffffffff), uint32_t(timeSeed >> 32)};
         rng.seed(ss);
         std::mt19937 g(rng());
 
-        std::shuffle(this->indexes.begin(), this->indexes.end(), g);
+        for (auto &class_set : this->class_sets)
+            std::shuffle(VEC_RANGE(class_set.second), g);
 
-        for (uint32_t i{0}; i < train_set.size(); i++)
-            this->train_set[i] = this->indexes[i];
+        uint32_t i{0};
 
-        for (uint32_t i{0}; i < test_set.size(); i++)
-            this->test_set[i] = this->indexes[train_set.size() + i];
+        for (auto &class_set : this->class_sets)
+        {
+            for (uint32_t x{0}; x < static_cast<uint32_t>(std::ceil(class_set.second.size() * this->subsets_ratio.front())); x++)
+            {
+                this->train_set[i] = class_set.second[x];
+                i++;
+            }
+        }
+
+        i = 0;
+
+        for (auto &class_set : this->class_sets)
+        {
+            for (uint32_t x{0}; x < static_cast<uint32_t>(std::floor(class_set.second.size() * this->subsets_ratio.back())); x++)
+            {
+                this->test_set[i] = class_set.second[x];
+                i++;
+            }
+        }
     }
 
     std::vector<bool> classification_test = std::vector<bool>(test_set.size(), 0);
@@ -211,7 +242,7 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     out.output_params = this->learn_parameters;
     out.output_layers = std::vector<Layer>(this->layers.begin() + 1, this->layers.end());
     out.error_goal = error_goal;
-    
+
     if (epoch == max_epoch)
         out.result = TrainResult::MaxEpochReached;
     else
@@ -444,15 +475,22 @@ Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)
     this->input_data = input_data;
 
     //Verify subsets_ratio
-    {
-        double tmp = 0;
-        for (auto &value : subsets_ratio)
-            tmp += value;
-        if (tmp != 1)
-            throw std::invalid_argument(std::string("Sum of subsets ratio is not equal 1"));
-    }
+    if (static_cast<uint32_t>(std::accumulate(VEC_RANGE(subsets_ratio), 0.0)) != 1)
+        throw std::invalid_argument(std::string("Sum of subsets ratio is not equal 1"));
 
     this->subsets_ratio = subsets_ratio;
+
+    //assign class sets
+    for (uint32_t index{0}; index < this->input_data.size(); index++)
+    {
+        //TODO: this is not what i want          \/
+        auto &value = this->input_data[index].output[0];
+        auto it = get_class_vector(value);
+        if (it == this->class_sets.end())
+            this->class_sets.push_back(std::make_pair(value, std::vector<uint32_t>(1, index)));
+        else
+            it->second.push_back(index);
+    }
 
     this->train_set = std::vector<uint32_t>(static_cast<uint32_t>(ceil(this->subsets_ratio.front() * input_data.size())));
     this->test_set = std::vector<uint32_t>(static_cast<uint32_t>(floor(this->subsets_ratio.back() * input_data.size())));

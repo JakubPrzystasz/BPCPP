@@ -4,11 +4,11 @@
 
 class Net
 {
-    enum class LearningRateUpdate{
+    enum class LearningRateUpdate
+    {
         Increase,
         Decrease,
     };
-
 
     /**
      * Size of input layer
@@ -38,17 +38,22 @@ class Net
 
     uint32_t batch_it;
 
-    void update_learning_rate(LearningRateUpdate value);
-
     double prev_SSE;
 
     uint32_t epoch;
+
+    std::vector<std::pair<double, std::vector<uint32_t>>> class_sets;
+
+    std::vector<std::pair<double, std::vector<uint32_t>>>::iterator get_class_vector(double class_value);
+
+    void update_learning_rate(LearningRateUpdate value);
 
 public:
     /**
      * Defines saving mode
      */
-    enum class SaveMode{
+    enum class SaveMode
+    {
         Overwrite,
         Append,
     };
@@ -79,13 +84,13 @@ public:
      * Percentage representation of training, and test set
      * Sum of values in array must be equal 1
      */
-    std::array<double,2> subsets_ratio;
+    std::array<double, 2> subsets_ratio;
 
     /**
      * Sum squared error - value computed and the end of each epoch
      */
     double SSE;
-    
+
     /**
      * Contains input, hidden, and output layers
      */
@@ -149,7 +154,7 @@ public:
      *  Each call of train makes new sets
      *  @arg subsets_ratio - Percentage representation of training, validation, and test set
      */
-    Net(pattern_set &input_data, std::array<double,2> subsets_ratio);
+    Net(pattern_set &input_data, std::array<double, 2> subsets_ratio);
 
     ~Net();
 };

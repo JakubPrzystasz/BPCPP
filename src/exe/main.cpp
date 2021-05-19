@@ -12,20 +12,20 @@ int main()
     LearnOutput output;
 
     uint32_t S1_MIN{1};
-    uint32_t S1_MAX{26};
+    uint32_t S1_MAX{30};
     
     uint32_t S2_MIN{1};
-    uint32_t S2_MAX{26};
+    uint32_t S2_MAX{30};
 
-    uint32_t left{625};
+    uint32_t left{(S1_MAX - S1_MIN + 1) * (S2_MAX - S2_MIN + 1)};
     uint32_t i{1};
 
-    for(uint32_t S1{S1_MIN};S1<S1_MAX;S1++){
-        for(uint32_t S2{S2_MIN};S2<S2_MAX;S2++){
+    for(uint32_t S1{S1_MIN};S1<=S1_MAX;S1++){
+        for(uint32_t S2{S2_MIN};S2<=S2_MAX;S2++){
             net.setup({S1, S2}, params);
             output = net.train(10000,0.001);
             Net::save_output("OUTPUT.json", output);
-            std::cout << "Iterations left: " << left - i << " " << S1 << " " << S2 << std::endl;
+            std::cout << "Iterations left: " << left - i << "   S1:" << S1 << "   S2:" << S2 << std::endl;
             i++;
         }
     }
