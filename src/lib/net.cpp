@@ -175,9 +175,9 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     std::vector<bool> classification_test = std::vector<bool>(test_set.size(), 0);
     std::vector<bool> classification_train = std::vector<bool>(train_set.size(), 0);
 
-    double classification_accuracy, tmp_SSE;
-    this->epoch = 0;
+    double classification_accuracy, epoch_SSE;
     uint32_t index{0};
+    this->epoch = 0;
     this->SSE = 0;
 
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -185,47 +185,50 @@ LearnOutput Net::train(double max_epoch, double error_goal)
     for (; this->epoch < max_epoch; this->epoch++)
     {
         this->batch_it = 1;
-        this->prev_SSE = this->SSE;
-        this->SSE = 0;
-        tmp_SSE = 0;
+        epoch_SSE = 0;
 
         //Make full run over training data
         for (uint32_t it{0}; it < train_set.size(); it++)
         {
             index = train_set[it];
             this->learn(index);
+            classification_train[it] = this->get_classification_succes(index);
+            
             //if batch ends - update weights and biases
             if ((this->batch_it % this->learn_parameters.batch_size) == 0)
-            {
+            {  
+                this->SSE *= 0.5;
+                this->prev_SSE = this->SSE;
+                epoch_SSE += this->SSE;
                 this->update_weights();
                 this->batch_it = 1;
-                tmp_SSE += this->SSE;
+                std::cout << "Epoch: " << epoch + 1 << "; Error: " << std::fixed << std::setprecision(15) << this->SSE << ";" <<  std::endl;
+                this->SSE = 0.0;
             }
             else
                 batch_it++;
 
-            classification_train[it] = this->get_classification_succes(index);
         }
 
         //Stuff for later analyse
-        out.train_set_SSE.push_back(tmp_SSE);
-        out.train_set_MSE.push_back(tmp_SSE / static_cast<double>(train_set.size()));
+        out.train_set_SSE.push_back(epoch_SSE);
+        out.train_set_MSE.push_back(epoch_SSE / static_cast<double>(train_set.size()));
 
         classification_accuracy = 0;
         for (auto value : classification_train)
             classification_accuracy += static_cast<double>(value);
         out.train_set_accuracy.push_back(classification_accuracy / static_cast<double>(train_set.size()));
 
-        tmp_SSE = 0;
+        epoch_SSE = 0;
         for (uint32_t it{0}; it < test_set.size(); it++)
         {
             index = test_set[it];
             this->feed(index);
-            tmp_SSE += this->get_cost(index);
+            epoch_SSE += this->get_cost(index);
             classification_test[it] = this->get_classification_succes(index);
         }
-        out.test_set_SSE.push_back(tmp_SSE);
-        out.test_set_MSE.push_back(tmp_SSE / static_cast<double>(train_set.size()));
+        out.test_set_SSE.push_back(epoch_SSE);
+        out.test_set_MSE.push_back(epoch_SSE / static_cast<double>(train_set.size()));
 
         classification_accuracy = 0;
         for (auto value : classification_test)
@@ -328,8 +331,6 @@ double Net::get_cost(uint32_t sample_number)
 
 void Net::update_weights()
 {
-    this->SSE *= 0.5;
-
     //Adaptive learning rate:
     if (this->epoch && this->learn_parameters.learning_accelerating_constans > 0 && this->learn_parameters.learning_decelerating_constans > 0)
     {
@@ -446,6 +447,8 @@ void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
 
     //output layer
     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), this->learn_parameters));
+    for(auto &neuron: this->layers.back().neurons)
+        neuron.bias = 0;
 }
 
 Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)

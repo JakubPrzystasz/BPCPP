@@ -254,8 +254,8 @@ struct LearnParams
 
         this->beta_param = 1.0;
 
-        this->weights_range = std::make_pair(-1.0, 1.0);
-        this->bias_range = std::make_pair(-1.0, 1.0);
+        this->weights_range = std::make_pair(-0.5, 0.5);
+        this->bias_range = std::make_pair(-0.5, 0.5);
         this->init_function = InitFunction::rand;
 
         this->activation = ActivationFunction::bipolar;

@@ -16,12 +16,7 @@ namespace ActivationFunction
 
     double unipolar(double input, double *params)
     {
-        double ret = __normalize((1.0 / (1.0 + std::pow(M_E, -((*params) * input)))));
-        if (ret > 1.0)
-            return 1.0;
-        if (ret < 0)
-            return 0;
-        return ret;
+        return __normalize((1.0 / (1.0 + std::pow(M_E, -((*params) * input)))));
     }
 
     double unipolar_derivative(double input, double *params)
@@ -31,12 +26,7 @@ namespace ActivationFunction
 
     double bipolar(double input, double *params)
     {
-        double ret = __normalize(tanh((*params) * input));
-        if (ret > 1.0)
-            return 1.0;
-        if (ret < -1.0)
-            return -1.0;
-        return ret;
+        return __normalize(tanh((*params) * input));
     }
 
     double bipolar_derivative(double input, double *params)

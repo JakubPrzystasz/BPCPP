@@ -24,28 +24,27 @@ namespace InitFunction
 
     void rand(Layer &layer)
     {
-        uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         for (auto &neuron : layer.neurons)
         {
-            neuron.bias = __unifrom_random(neuron.learn_parameters.bias_range, timeSeed);
+            neuron.bias = __unifrom_random(neuron.learn_parameters.bias_range, std::chrono::high_resolution_clock::now().time_since_epoch().count());
             for (auto &weight : neuron.weights)
-                weight = __unifrom_random(neuron.learn_parameters.weights_range, timeSeed);
+                weight = __unifrom_random(neuron.learn_parameters.weights_range, std::chrono::high_resolution_clock::now().time_since_epoch().count());
         }
     }
 
     void const_rand(Layer &layer)
     {
+        static uint64_t it {0};
         for (auto &neuron : layer.neurons)
         {
-            neuron.bias = __unifrom_random(neuron.learn_parameters.bias_range, 123456789ULL);
+            neuron.bias = __unifrom_random(neuron.learn_parameters.bias_range, 1ULL + (it++));
             for (auto &weight : neuron.weights)
-                weight = __unifrom_random(neuron.learn_parameters.weights_range, 123456789ULL);
+                weight = __unifrom_random(neuron.learn_parameters.weights_range, 1ULL + (it++));
         }
     }
 
     void nw(Layer &layer)
     {
-        uint64_t timeSeed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         //Compute scaling factor
         double theta = 0.7 * std::pow(static_cast<double>(layer.inputs), 1.0 / static_cast<double>(layer.neurons.size()));
         //Initialize the wights and biases for each neuron at random, eg. U(-0.5,0.5)
@@ -56,7 +55,7 @@ namespace InitFunction
             double eta = std::sqrt(std::accumulate(VEC_RANGE(neuron.weights), 0.0, accumulate::square<double>()));
             for (auto &weight : neuron.weights)
                 weight = (theta * weight) / eta;
-            neuron.bias = __unifrom_random(rand_range(-1.0 * theta, theta), timeSeed);
+            neuron.bias = __unifrom_random(rand_range(-1.0 * theta, theta), std::chrono::high_resolution_clock::now().time_since_epoch().count());
         }
     }
 
