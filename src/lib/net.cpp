@@ -202,7 +202,6 @@ LearnOutput Net::train(double max_epoch, double error_goal)
                 epoch_SSE += this->SSE;
                 this->update_weights();
                 this->batch_it = 1;
-                std::cout << "Epoch: " << epoch + 1 << "; Error: " << std::fixed << std::setprecision(15) << this->SSE << ";" <<  std::endl;
                 this->SSE = 0.0;
             }
             else
@@ -235,7 +234,7 @@ LearnOutput Net::train(double max_epoch, double error_goal)
             classification_accuracy += static_cast<double>(value);
         out.test_set_accuracy.push_back(classification_accuracy / static_cast<double>(test_set.size()));
 
-        if (out.train_set_SSE.back() <= error_goal)
+        if (out.train_set_SSE.back() < error_goal)
             break;
     }
 
@@ -262,10 +261,7 @@ void Net::feed(uint32_t sample_number)
     auto &data = this->input_data[sample_number].input;
 
     for (uint32_t neuron_it{0}; neuron_it < layer.neurons.size(); neuron_it++)
-    {
-        auto &neuron = layer.neurons[neuron_it];
-        neuron.input = neuron.output = neuron.derivative_output = data[neuron_it];
-    }
+        layer.neurons[neuron_it].output = data[neuron_it];
 
     //Set hidden layers and output layer
     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
