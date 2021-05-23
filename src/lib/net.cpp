@@ -137,6 +137,8 @@ LearnOutput Net::train(double max_epoch, double error_goal)
 
     out.input_params = this->learn_parameters;
     out.input_layers = std::vector<Layer>(this->layers.begin() + 1, this->layers.end());
+    out.train_set_ratio = static_cast<double>(this->train_set.size()) / static_cast<double>(this->input_data.size());
+    out.test_set_ratio = static_cast<double>(this->test_set.size()) / static_cast<double>(this->input_data.size());
 
     //shuffle values
     {
@@ -187,16 +189,18 @@ LearnOutput Net::train(double max_epoch, double error_goal)
         this->batch_it = 1;
         epoch_SSE = 0;
 
+        //std::cout << epoch << std::endl;
+        
         //Make full run over training data
         for (uint32_t it{0}; it < train_set.size(); it++)
         {
             index = train_set[it];
             this->learn(index);
             classification_train[it] = this->get_classification_succes(index);
-            
+
             //if batch ends - update weights and biases
             if ((this->batch_it % this->learn_parameters.batch_size) == 0)
-            {  
+            {
                 this->SSE *= 0.5;
                 this->prev_SSE = this->SSE;
                 epoch_SSE += this->SSE;
@@ -206,7 +210,6 @@ LearnOutput Net::train(double max_epoch, double error_goal)
             }
             else
                 batch_it++;
-
         }
 
         //Stuff for later analyse
@@ -223,11 +226,11 @@ LearnOutput Net::train(double max_epoch, double error_goal)
         {
             index = test_set[it];
             this->feed(index);
-            epoch_SSE += this->get_cost(index);
+            epoch_SSE += this->get_loose(index);
             classification_test[it] = this->get_classification_succes(index);
         }
         out.test_set_SSE.push_back(epoch_SSE);
-        out.test_set_MSE.push_back(epoch_SSE / static_cast<double>(train_set.size()));
+        out.test_set_MSE.push_back(epoch_SSE / static_cast<double>(test_set.size()));
 
         classification_accuracy = 0;
         for (auto value : classification_test)
@@ -283,6 +286,7 @@ void Net::feed(uint32_t sample_number)
 void Net::get_delta(uint32_t sample_number)
 {
     //Find delta for each neuron in each layer
+
     //Calculate delta of the output layer
     auto &last_layer = this->layers.back();
     for (uint32_t neuron_it{0}; neuron_it < last_layer.neurons.size(); neuron_it++)
@@ -291,6 +295,7 @@ void Net::get_delta(uint32_t sample_number)
         neuron.delta = (this->input_data[sample_number].output[neuron_it] - neuron.output) * neuron.derivative_output * -1.0;
     }
 
+    //Hidden layers
     for (uint32_t layer_it{static_cast<uint32_t>(this->layers.size()) - 2}; layer_it > 0; layer_it--)
     {
         auto &layer = this->layers[layer_it];
@@ -311,7 +316,7 @@ void Net::get_delta(uint32_t sample_number)
     }
 }
 
-double Net::get_cost(uint32_t sample_number)
+double Net::get_loose(uint32_t sample_number)
 {
     double error{0}, tmp;
     auto &target = this->input_data[sample_number].output;
@@ -387,7 +392,7 @@ void Net::learn(uint32_t sample_number)
     uint32_t batch_it = this->batch_it - 1;
     this->feed(sample_number);
     this->get_delta(sample_number);
-    this->SSE += this->get_cost(sample_number);
+    this->SSE += this->get_loose(sample_number);
 
     ///Calculate gradient
     for (uint32_t layer_it{1}; layer_it < this->layers.size(); layer_it++)
@@ -420,9 +425,21 @@ bool Net::get_classification_succes(uint32_t sample_number)
     return false;
 }
 
-void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
+void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params, std::array<double, 2> subsets_ratio)
 {
     this->learn_parameters = params;
+
+    //Verify subsets_ratio
+    if (static_cast<uint32_t>(std::accumulate(VEC_RANGE(subsets_ratio), 0.0)) != 1)
+        throw std::invalid_argument(std::string("Sum of subsets ratio is not equal 1"));
+
+    this->subsets_ratio = subsets_ratio;
+
+    this->train_set = std::vector<uint32_t>(static_cast<uint32_t>(ceil(this->subsets_ratio.front() * input_data.size())));
+    this->test_set = std::vector<uint32_t>(static_cast<uint32_t>(floor(this->subsets_ratio.back() * input_data.size())));
+
+    if (!((train_set.size() + test_set.size()) == input_data.size()))
+        throw std::invalid_argument(std::string("I do math wrong ;("));
 
     //If params.batch_size is 0, then set batch_size equal to size of whole training set
     if (this->learn_parameters.batch_size == 0)
@@ -443,11 +460,11 @@ void Net::setup(std::vector<uint32_t> hidden_layers, LearnParams params)
 
     //output layer
     this->layers.push_back(Layer(this->output_size, this->layers.back().neurons.size(), this->learn_parameters));
-    for(auto &neuron: this->layers.back().neurons)
+    for (auto &neuron : this->layers.back().neurons)
         neuron.bias = 0;
 }
 
-Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)
+Net::Net(pattern_set &input_data)
 {
     /*
         Validate input data
@@ -473,12 +490,6 @@ Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)
     //Assign given parameters
     this->input_data = input_data;
 
-    //Verify subsets_ratio
-    if (static_cast<uint32_t>(std::accumulate(VEC_RANGE(subsets_ratio), 0.0)) != 1)
-        throw std::invalid_argument(std::string("Sum of subsets ratio is not equal 1"));
-
-    this->subsets_ratio = subsets_ratio;
-
     //assign class sets
     for (uint32_t index{0}; index < this->input_data.size(); index++)
     {
@@ -490,12 +501,6 @@ Net::Net(pattern_set &input_data, std::array<double, 2> subsets_ratio)
         else
             it->second.push_back(index);
     }
-
-    this->train_set = std::vector<uint32_t>(static_cast<uint32_t>(ceil(this->subsets_ratio.front() * input_data.size())));
-    this->test_set = std::vector<uint32_t>(static_cast<uint32_t>(floor(this->subsets_ratio.back() * input_data.size())));
-
-    if (!((train_set.size() + test_set.size()) == input_data.size()))
-        throw std::invalid_argument(std::string("I do math wrong ;("));
 
     for (uint32_t i{0}; i < input_data.size(); i++)
         this->indexes.push_back(i);
@@ -519,6 +524,8 @@ void to_json(json &j, const LearnOutput &lo)
         {"output_params", lo.output_params},
         {"input_layers", lo.input_layers},
         {"output_layers", lo.output_layers},
+        {"train_set_ratio", lo.train_set_ratio},
+        {"test_set_ratio", lo.test_set_ratio},
     };
 }
 
@@ -535,7 +542,8 @@ void to_json(json &j, const LearnParams &lp)
         {"beta_param", lp.beta_param},
         {"weights_range", lp.weights_range},
         {"bias_range", lp.bias_range},
-        {"init_function", lp.init_function == InitFunction::rand ? "random" : "nw"},
+        {"init_function", lp.init_function == InitFunction::rand ? "random" : lp.init_function == InitFunction::nw ? "nw"
+                                                                                                                   : "const_rand"},
         {"activation", lp.activation == ActivationFunction::bipolar ? "bipolar" : lp.activation == ActivationFunction::unipolar ? "unipolar"
                                                                                                                                 : "linear"},
     };

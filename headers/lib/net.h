@@ -71,7 +71,14 @@ public:
      */
     static void save_output(std::string filename, LearnOutput &output, SaveMode mode = SaveMode::Append);
 
+    /**
+     * Flush file and open json array
+     */
     static void open_file(std::string filename);
+
+    /**
+	  * Append to file array ending
+	  */
     static void close_file(std::string filename);
 
     /**
@@ -121,7 +128,7 @@ public:
      * Calculates error
      * @arg sample_number - number of sample in input_data vector
      */
-    double get_cost(uint32_t sample_number);
+    double get_loose(uint32_t sample_number);
 
     /**
      * Updates weights for all neurons in net
@@ -145,7 +152,7 @@ public:
      * @arg hidden_layers - vector of sizes of hidden layers
      * @arg params - blueprint for each neuron 
      */
-    void setup(std::vector<uint32_t> hidden_layers, LearnParams params);
+    void setup(std::vector<uint32_t> hidden_layers, LearnParams params, std::array<double, 2> subsets_ratio = {0.8, 0.2});
 
     /**
      *  Constructor of neural network
@@ -154,7 +161,7 @@ public:
      *  Each call of train makes new sets
      *  @arg subsets_ratio - Percentage representation of training, validation, and test set
      */
-    Net(pattern_set &input_data, std::array<double, 2> subsets_ratio);
+    Net(pattern_set &input_data);
 
     ~Net();
 };

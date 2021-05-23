@@ -280,6 +280,9 @@ struct LearnOutput
     //Percentage accuracy of classification
     data_row test_set_accuracy;
 
+    double train_set_ratio;
+    double test_set_ratio;
+
     //Learning time in seconds
     uint32_t time;
     uint32_t epoch_count;
